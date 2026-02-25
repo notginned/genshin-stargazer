@@ -9,6 +9,28 @@ If an image can not be processed, you will get an error and that batch will be d
 
 All the processing is done on your device, no data is uploaded.
 
+## Development / Self hosting the app
+> [!NOTE]
+> Make sure to have nodejs installed on your system
+
+1. Clone the repo
+```
+# via SSH
+git clone git@github.com:notginned/genshin-stargazer.git && cd genshin-stargazer
+
+## or via https
+git clone https://github.com/notginned/genshin-stargazer.git && cd genshin-stargazer
+
+```
+2. Install dependencies
+```
+npm install
+```
+3. Run the site locally
+```
+npm run dev
+```
+
 ## Pipeline
 
 1. User adds file(s) to the application using the file picker.
