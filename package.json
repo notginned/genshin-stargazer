@@ -13,6 +13,7 @@
   "dependencies": {
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.2",
+    "@rollup/rollup-linux-x64-musl": "^4.59.0",
     "@techstark/opencv-js": "^4.11.0-release.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
