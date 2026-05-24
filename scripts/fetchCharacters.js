@@ -26,6 +26,7 @@ function getChars(dom) {
     }, {});
     return data;
 }
+
 async function fetchCharacters() {
     const page = await fetch(
         "https://genshin-impact.fandom.com/wiki/Character/List",
