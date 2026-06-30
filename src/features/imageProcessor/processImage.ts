@@ -11,7 +11,7 @@ import { ImageError } from "../../utils/ImageError.ts";
 
 async function preprocessImage(
   input: HTMLImageElement,
-  output: HTMLCanvasElement
+  output: HTMLCanvasElement,
 ) {
   try {
     const cv = await getOpenCv();
@@ -26,14 +26,14 @@ async function preprocessImage(
         new cv.Size(1920, (1920 * input.height) / input.width),
         0,
         0,
-        cv.INTER_AREA
+        cv.INTER_AREA,
       );
 
     // Grayscaling
     cv.cvtColor(src, dst, cv.COLOR_BGR2GRAY);
 
     // Thresholding
-    cv.threshold(dst, dst, 170, 255, cv.THRESH_BINARY);
+    cv.threshold(dst, dst, 175, 255, cv.THRESH_BINARY);
     cv.bitwise_not(dst, dst);
 
     // Hough Line Transform
@@ -84,7 +84,7 @@ async function preprocessImage(
 
 function getRectangle(
   bbox: bbox,
-  offset: { top: number; left: number; height: number; width: number }
+  offset: { top: number; left: number; height: number; width: number },
 ): Tesseract.Rectangle {
   return {
     top: offset.top + bbox.TOP_RATIO * offset.height,
@@ -98,7 +98,7 @@ function calcRegions(image: HTMLCanvasElement, offset: Rectangle): ScanRegions {
   const pageRectangle = getRectangle(PAGE_COUNT_BBOX, offset);
 
   const rectangles = [ITEM_NAME_BBOX, WISH_TYPE_BBOX, TIME_RECEIVED_BBOX].map(
-    (bbox) => getRectangle(bbox, offset)
+    (bbox) => getRectangle(bbox, offset),
   );
 
   return { image, rectangles, pageRectangle } satisfies ScanRegions;
@@ -106,7 +106,7 @@ function calcRegions(image: HTMLCanvasElement, offset: Rectangle): ScanRegions {
 
 async function getScanRegion(
   inputEl: HTMLImageElement,
-  outputEl: HTMLCanvasElement
+  outputEl: HTMLCanvasElement,
 ) {
   const offset = await preprocessImage(inputEl, outputEl);
 
@@ -119,8 +119,8 @@ async function getScanRegion(
   if (
     region.rectangles.some((rect) =>
       Object.values(rect).some(
-        (value) => Number.isNaN(value) || !Number.isFinite(value)
-      )
+        (value) => Number.isNaN(value) || !Number.isFinite(value),
+      ),
     )
   ) {
     throw new ImageError("There was a problem scanning this image.", inputEl);
