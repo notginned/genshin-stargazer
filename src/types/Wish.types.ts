@@ -14,4 +14,5 @@ export interface WishHistory {
   permanent_wish: Wish[];
   beginners_wish: Wish[];
   chronicled_wish: Wish[];
+  lightrace_wish: Wish[];
 }

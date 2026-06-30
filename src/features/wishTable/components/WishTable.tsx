@@ -31,6 +31,8 @@ function getBanner({ wishType, timeReceived, part }: Wish) {
       return "Beginners' Wish";
     case "Chronicled Wish":
       return banners[2] || "Chronicled Wish";
+    case "Lightrace Wish":
+      return "Lightrace Wish";
     default:
       throw new Error("Couldn't get wish type");
   }

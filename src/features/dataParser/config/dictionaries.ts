@@ -12,6 +12,7 @@ const wishTypesDict = new BKTree([
   "Beginners' Wish",
   "Permanent Wish",
   "Chronicled Wish",
+  "Lightrace Wish",
   "Weapon Event Wish",
 ]);
 

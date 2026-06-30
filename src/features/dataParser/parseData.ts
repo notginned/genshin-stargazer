@@ -1,20 +1,7 @@
-import weapons from "../../../data/weapons.json";
-import characters from "../../../data/characters.json";
 import { BKTree } from "../../utils/BKTree.ts";
 import type { ScanResult } from "../scanner/utils/scan.types.ts";
 import type { Wish } from "../../types/Wish.types.ts";
-
-const itemNamesDict = new BKTree(
-  Object.keys(weapons).concat(Object.keys(characters))
-);
-
-const wishTypesDict = new BKTree([
-  "Character Event Wish",
-  "Character Event Wish-2",
-  "Permanent Wish",
-  "Chronicled Wish",
-  "Weapon Event Wish",
-]);
+import { itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;
