@@ -36,7 +36,13 @@ function convertToKey(wishType: Wish["wishType"]): keyof WishHistory {
 function historyReducer(acc: WishHistory, cur: Wish[]): WishHistory {
   cur.forEach((wish) => {
     const wishType = convertToKey(wish.wishType);
-    acc[wishType].push(wish);
+
+    // Lightrace wishes share pity with chronicled
+    if (wishType === "lightrace_wish") {
+      acc.chronicled_wish.push(wish);
+    } else {
+      acc[wishType].push(wish);
+    }
   });
 
   return acc;
@@ -112,15 +118,15 @@ function mergeList(oldList: Wish[], newList: Wish[]): Wish[] {
 
 function mergeHistories(
   oldHistory: WishHistory,
-  newHistory: WishHistory
+  newHistory: WishHistory,
 ): WishHistory {
-  const res = {} as WishHistory;
+  const res = createEmptyWishHistory();
 
-  for (const type of Object.keys(oldHistory)) {
-    res[type as keyof typeof res] = mergeList(
-      oldHistory[type as keyof typeof oldHistory],
-      newHistory[type as keyof typeof newHistory]
-    );
+  for (const type of Object.keys(res)) {
+    const oldList = oldHistory[type as keyof typeof oldHistory];
+    const newList = newHistory[type as keyof typeof oldHistory];
+    
+    res[type as keyof typeof res] = mergeList(oldList ?? [], newList ?? []);
   }
 
   return res;

@@ -10,7 +10,6 @@ function tablesToSheets(tables: EventToTable) {
     beginners_wish: utils.table_to_sheet(tables.beginners_wish),
     permanent_wish: utils.table_to_sheet(tables.permanent_wish),
     chronicled_wish: utils.table_to_sheet(tables.chronicled_wish),
-    lightrace_wish: utils.table_to_sheet(tables.lightrace_wish),
   };
 }
 
@@ -26,7 +25,6 @@ export function generateSheet(tables: EventToTable | null) {
     beginners_wish,
     permanent_wish,
     chronicled_wish,
-    lightrace_wish,
   } = tablesToSheets(tables);
 
   const information = utils.aoa_to_sheet([
@@ -50,7 +48,6 @@ export function generateSheet(tables: EventToTable | null) {
   utils.book_append_sheet(workbook, permanent_wish, "Standard");
   utils.book_append_sheet(workbook, beginners_wish, "Beginners' Wish");
   utils.book_append_sheet(workbook, chronicled_wish, "Chronicled Wish");
-  utils.book_append_sheet(workbook, lightrace_wish, "Lightrace Wish");
   utils.book_append_sheet(workbook, information, "Information");
 
   // Adjusting widths

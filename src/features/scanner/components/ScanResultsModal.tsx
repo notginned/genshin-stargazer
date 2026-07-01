@@ -21,7 +21,6 @@ function ScanResultsModal({
   const permanentCount = scanResultTable.permanent_wish.length;
   const beginnersCount = scanResultTable.beginners_wish.length;
   const chronicledCount = scanResultTable.chronicled_wish.length;
-  const lightraceCount = scanResultTable.lightrace_wish.length;
 
   const total =
     characterCount +
@@ -66,11 +65,6 @@ function ScanResultsModal({
             <td>Chronicled Wish</td>
             <td>{chronicledCount}</td>
           </tr>
-          <tr>
-            <td>Lightrace Wish</td>
-            <td>{lightraceCount}</td>
-          </tr>
-
           <tr>
             <th>Total</th>
             <td>{total}</td>

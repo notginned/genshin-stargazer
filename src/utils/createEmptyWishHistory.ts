@@ -7,6 +7,5 @@ export function createEmptyWishHistory() {
     permanent_wish: [],
     beginners_wish: [],
     chronicled_wish: [],
-    lightrace_wish: [],
   } as WishHistory;
 }
