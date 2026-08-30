@@ -13,7 +13,6 @@
   "dependencies": {
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.2",
-    "@rollup/rollup-linux-x64-musl": "^4.59.0",
     "@techstark/opencv-js": "^4.11.0-release.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -37,5 +36,10 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
+  },
+  "allowScripts": {
+    "@swc/core@1.16.1": true,
+    "esbuild@0.28.2": true,
+    "tesseract.js@6.0.1": true
   }
 }
