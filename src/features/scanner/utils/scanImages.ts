@@ -3,6 +3,16 @@ import type { ScanRegions } from "./scan.types";
 import type { Scheduler } from "./Scheduler.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 
+import { PaddleOCR } from "@paddleocr/paddleocr-js";
+
+const ocr = PaddleOCR.create({
+  worker: true,
+  ortOptions: {
+    numThreads: 2,
+    simd: true
+  }
+});
+
 async function scanSingleRegion(region: ScanRegions, scheduler: Scheduler) {
   try {
     return Promise.all(region.rectangles
@@ -31,17 +41,37 @@ async function scanSingleRegion(region: ScanRegions, scheduler: Scheduler) {
   }
 }
 
+const ocrRegions = async (region: ScanRegions) => {
+  const o = await ocr;
+  const canvas = document.createElement("canvas");
+  const rectangle = region.rectangles[0]
+  canvas.width = rectangle.width;
+  canvas.height = rectangle.height;
+  
+  const ctx = canvas.getContext("2d")!;  
+      ctx.drawImage(
+        region.image, 
+        0, 0, rectangle.width, rectangle.height         // Destination canvas
+    );
+
+  console.log(region);
+  const text = await o.predict(canvas);      
+  console.log(text);
+}
+
 export async function scanImages(
   regions: ScanRegions[],
   scheduler: Scheduler,
   callback: (region: ScanRegions) => void
 ): Promise<RecognizeResult[][]> {
   const results = await Promise.all(
-    regions.map((region) =>
-      scanSingleRegion(region, scheduler).then((data) => {
+    regions.map(async (region) => {
+      await ocrRegions(region);
+      return scanSingleRegion(region, scheduler).then((data) => {
         callback(region);
         return data;
       })
+    }
     )
   );
   

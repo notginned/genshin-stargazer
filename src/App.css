@@ -63,7 +63,7 @@ body {
 
 .images {
   position: relative;
-  height: 0;
+  /* height: 0; */
   overflow: hidden;
 }
 
@@ -431,12 +431,15 @@ dialog {
   overflow: hidden;
 }
 
-.src_image,
-.out_image {
+.src_image {
   position: absolute;
   top: 0;
   left: 0;
   visibility: collapse;
+}
+
+.out_image  {
+  visibility: initial
 }
 
 .progress-label {
