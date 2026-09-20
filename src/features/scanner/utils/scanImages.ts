@@ -49,10 +49,11 @@ const ocrRegions = async (region: ScanRegions) => {
   canvas.height = rectangle.height;
   
   const ctx = canvas.getContext("2d")!;  
-      ctx.drawImage(
-        region.image, 
-        0, 0, rectangle.width, rectangle.height         // Destination canvas
-    );
+  ctx.drawImage(
+      region.image, 
+      rectangle.left, rectangle.top, rectangle.width, rectangle.height,         // Destination canvas
+      0, 0, rectangle.width, rectangle.height         // Destination canvas
+  );
 
   console.log(region);
   const text = await o.predict(canvas);      
