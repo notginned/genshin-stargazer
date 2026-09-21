@@ -1,6 +1,15 @@
+export interface Rectangle {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 export interface ScanRegions {
   image: HTMLCanvasElement;
-  rectangles: Tesseract.Rectangle[];
+  itemNameRectangle: Rectangle;
+  typeRectangle: Rectangle;
+  timeRectangle: Rectangle;
   pageRectangle: Tesseract.Rectangle;
 }
 

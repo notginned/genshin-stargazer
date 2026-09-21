@@ -13,15 +13,10 @@ import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { getScanRegion } from "../../imageProcessor/processImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
-import type {
-  Images,
-  ProcessedImages,
-  ScannedImages,
-} from "../../../types/State.type.ts";
+import type { Images, ProcessedImages, ScannedImages } from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
-import { getScheduler } from "../utils/Scheduler.ts";
 
 interface ScannerProps {
   images: Images;
@@ -47,48 +42,34 @@ function Scanner({
   const [error, setError] = useState<ImageError | null>(null);
   const errorModalRef = useRef<HTMLDialogElement | null>(null);
 
-  const [isReady, setIsReady] = useState(false);
-
   // There was an error processing the image
   if (error) {
-    console.error(error.cause);
+    console.error(error);
     errorModalRef.current?.showModal();
   }
 
   // Happy path
   const scanQueue = Object.values(processedImages).filter(
-    (region) => !scannedImages[region.image.id]
+    (region) => !scannedImages[region.image.id],
   );
 
   // +1 so that the progress isn't 100% from the start for single images
   const progressPercent = Math.round((progress * 100) / (scanQueue.length + 1));
 
-  const [scanResultTable, setScanResultTable] = useState<WishHistory | null>(
-    null
-  );
+  const [scanResultTable, setScanResultTable] = useState<WishHistory | null>(null);
   const resultsModalRef = useRef<HTMLDialogElement | null>(null);
 
   if (scanResultTable) {
     if (resultsModalRef.current) resultsModalRef.current.showModal();
   }
 
-  const allImagesLoaded = Object.keys(images).every(
-    (hash) => processedImages[hash]
-  );
+  const allImagesLoaded = Object.keys(images).every((hash) => processedImages[hash]);
 
   const allImagesScanned = scanQueue.length === 0;
 
   if (allImagesLoaded) {
     console.debug("Loaded all images");
   }
-
-  useEffect(() => {
-    async function waitForReady() {
-      await getScheduler();
-      setIsReady(true);
-    }
-    waitForReady();
-  }, []);
 
   const handleErrorModalClose = useCallback(() => {
     if (!error) return;
@@ -125,12 +106,9 @@ function Scanner({
         }
 
         const inputEl = document.querySelector<HTMLImageElement>("#" + hash);
-        const canvasEl = document.querySelector<HTMLCanvasElement>(
-          "#" + "canvas" + "_" + hash
-        );
+        const canvasEl = document.querySelector<HTMLCanvasElement>("#" + "canvas" + "_" + hash);
 
-        if (inputEl === null || canvasEl === null)
-          throw new Error("Can't find image to process");
+        if (inputEl === null || canvasEl === null) throw new Error("Can't find image to process");
 
         const newScanRegion = await getScanRegion(inputEl, canvasEl);
 
@@ -144,7 +122,7 @@ function Scanner({
         }
       }
     },
-    [setImages, processedImages, setProcessedImages]
+    [setImages, processedImages, setProcessedImages],
   );
 
   // Function to handle scanning
@@ -164,20 +142,15 @@ function Scanner({
 
     // Critical Section
     setIsScanning(true);
-    console.debug("Start time", new Date());
-    const scheduler = await getScheduler();
-    console.log('scheduler initialized');
-
     try {
-      const scanResults = await scanImages(
-        scanQueue,
-        scheduler,
-        (region: ScanRegions) => {
-          console.debug("Scanning image", region.image.id);
-          setProgress((p) => (p += 1));
-        }
-      );
+      const scanResults = await scanImages(scanQueue, (region: ScanRegions) => {
+        console.debug("Scanning image", region.image.id);
+        setProgress((p) => (p += 1));
+      });
+      console.log("scan results", scanResults);
+
       const newHistory = processHistory(scanResults);
+      console.log("newHistory", newHistory);
 
       saveHistory(newHistory);
       setScanResultTable(newHistory);
@@ -199,7 +172,6 @@ function Scanner({
     // Cleanup
     // Reset scan state
     clearScanQueue();
-    // await scheduler.terminate();
     setIsScanning(false);
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
@@ -207,23 +179,11 @@ function Scanner({
     <>
       {!allImagesLoaded && <ProgressIndicator />}
 
-      {allImagesLoaded &&
-        !isScanning &&
-        !allImagesScanned &&
-        (isReady ? (
-          <button type="button" className="btn btn-scan" onClick={handleClick}>
-            Scan ({scanQueue.length})
-          </button>
-        ) : (
-          <div>
-            <p>
-              Downloading data for the scanner.
-              <br />
-              This may take a minute the first time.
-            </p>
-            <ProgressIndicator />
-          </div>
-        ))}
+      {allImagesLoaded && !isScanning && !allImagesScanned && (
+        <button type="button" className="btn btn-scan" onClick={handleClick}>
+          Scan ({scanQueue.length})
+        </button>
+      )}
       {isScanning && <ProgressIndicator value={progressPercent.toString()} />}
 
       <section className="images">
