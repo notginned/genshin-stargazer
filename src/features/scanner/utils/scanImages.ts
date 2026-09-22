@@ -1,10 +1,9 @@
+// import { PaddleOCR } from "@paddleocr/paddleocr-js";
 import type { ScanRegions, ScanResult } from "./scan.types";
 
-import { PaddleOCR } from "@paddleocr/paddleocr-js";
-import * as ort from "onnxruntime-node";
-import { ocr, PaddleOcrService, RecognitionService } from "ppu-paddle-ocr/web";
+import { PaddleOcrService } from "ppu-paddle-ocr/web";
 
-const myOcr = PaddleOCR.create({
+/* const myOcr = PaddleOCR.create({
   lang: "en",
   ocrVersion: "PP-OCRv5",
   worker: true,
@@ -12,21 +11,20 @@ const myOcr = PaddleOCR.create({
     backend: "auto",
     wasmPaths: "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/",
     numThreads: 4,
-    simd: true
-  }
-});
+    simd: true,
+  },
+}); */
 
 const service = new PaddleOcrService({
   debugging: {
     debug: false,
     verbose: true,
   },
+  session: {
+    executionMode: "parallel",
+    executionProviders: ["wasm", "cuda"],
+  },
 });
-
-
-const infS = await ort.InferenceSession.create("./models/PP-OCRv6_tiny_rec.onnx");
-const recS = new RecognitionService(infS);
-
 
 /* async function scanSingleRegion(region: ScanRegions, scheduler: Scheduler) {
   try {
@@ -56,7 +54,8 @@ const recS = new RecognitionService(infS);
   }
 } */
 
-const cropRegion = (img, rectangle, canvas) => {
+const cropRegion = (img, rectangle) => {
+  const canvas = document.createElement("canvas");
   canvas.width = rectangle.width;
   canvas.height = rectangle.height;
   const ctx = canvas.getContext("2d")!;
@@ -71,31 +70,29 @@ const cropRegion = (img, rectangle, canvas) => {
     rectangle.width,
     rectangle.height, // Destination canvas
   );
+
+  return canvas;
 };
 
 const ocrRegions = async (region: ScanRegions) => {
-  const canvas = document.createElement("canvas");
   const res: ScanResult = {} as ScanResult;
 
-  cropRegion(region.image, region.itemNameRectangle, canvas);
-  // res.itemName = (await o.predict(canvas))[0].items.map((it) => it.text + "\n");
-  const rect = region.itemNameRectangle;
- 
-  res.itemName = (await recS.run(canvas, {x: rect.left, y: rect.top, width: rect.width, height: rect.height }))[0].text.split("\n");
+  const canvases = [
+    region.itemNameRectangle,
+    region.typeRectangle,
+    region.timeRectangle,
+    region.pageRectangle,
+  ].map((r) => cropRegion(region.image, r));
 
-  cropRegion(region.image, region.typeRectangle, canvas);
-  // res.wishType = (await o.predict(canvas))[0].items.map((it) => it.text + "\n");
-  res.wishType = (await service.recognize(canvas)).text.split('\n');
+  await service.initialize();
+  const rps = await service.batchRecognize(canvases);
+  await service.destroy();
 
-  cropRegion(region.image, region.timeRectangle, canvas);
-  res.timeReceived = (await service.recognize(canvas)).text.split('\n');
-  // res.timeReceived = (await o.predict(canvas))[0].items.map((it) => it.text + "\n");
+  res.itemName = rps[0].text.split("\n");
+  res.wishType = rps[1].text.split("\n");
+  res.timeReceived = rps[2].text.split("\n");
+  res.pageNumber = rps[3].text.split("\n");
 
-  cropRegion(region.image, region.pageRectangle, canvas);
-  res.pageNumber = (await service.recognize(canvas)).text.split('\n');
-  // res.pageNumber = (await o.predict(canvas))[0].items.map((it) => it.text + "\n");
-
-  console.log(res);
   return res;
 };
 
@@ -103,7 +100,6 @@ export async function scanImages(
   regions: ScanRegions[],
   callback: (region: ScanRegions) => void,
 ): Promise<ScanResult[]> {
-  await service.initialize();
 
   const res = await Promise.all(
     regions.map(async (region) => {
@@ -111,10 +107,6 @@ export async function scanImages(
       return ocrRegions(region);
     }),
   );
-
-
-  
-  console.log("res", res);
 
   return res;
 }
