@@ -27,8 +27,7 @@ function App() {
 
   function handleClearHistory() {
     if (clearHistoryDialogRef.current === null) return;
-    setHistory(createEmptyWishHistory());
-    setScannedImages({});
+    localStorage.clear();
     clearHistoryDialogRef.current.close();
     window.location.reload();
   }
@@ -37,12 +36,6 @@ function App() {
     createEmptyWishHistory()
   );
 
-  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
-    "scannedImages",
-    {}
-  );
-
-  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
 
   const [images, setImages] = useState<Images>({});
 
@@ -79,12 +72,8 @@ function App() {
             </button>
             <ImagePicker setImages={setImages} images={images} />
             <Scanner
-              processedImages={processedImages}
-              setProcessedImages={setProcessedImages}
               images={images}
               setImages={setImages}
-              scannedImages={scannedImages}
-              setScannedImages={setScannedImages}
               saveHistory={saveHistory}
             />
 

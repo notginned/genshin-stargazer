@@ -1,7 +1,6 @@
 import {
   Fragment,
   useCallback,
-  useEffect,
   useRef,
   useState,
   type Dispatch,
@@ -17,30 +16,30 @@ import type { Images, ProcessedImages, ScannedImages } from "../../../types/Stat
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
+import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
 
 interface ScannerProps {
   images: Images;
   setImages: Dispatch<SetStateAction<Images>>;
-  scannedImages: ScannedImages;
-  setScannedImages: Dispatch<SetStateAction<ScannedImages>>;
   saveHistory: (newHistory: WishHistory) => void;
-  processedImages: ProcessedImages;
-  setProcessedImages: Dispatch<SetStateAction<ProcessedImages>>;
 }
 
 function Scanner({
   images,
   setImages,
-  scannedImages,
-  setScannedImages,
-  processedImages,
-  setProcessedImages,
   saveHistory,
 }: ScannerProps) {
   const [progress, setProgress] = useState(1);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<ImageError | null>(null);
   const errorModalRef = useRef<HTMLDialogElement | null>(null);
+  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
+    "scannedImages",
+    {}
+  );
+
+  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
+
 
   // There was an error processing the image
   if (error) {
@@ -63,12 +62,12 @@ function Scanner({
     if (resultsModalRef.current) resultsModalRef.current.showModal();
   }
 
-  const allImagesLoaded = Object.keys(images).every((hash) => processedImages[hash]);
+  const allImagesProcessed = Object.keys(images).every((hash) => processedImages[hash]);
 
   const allImagesScanned = scanQueue.length === 0;
 
-  if (allImagesLoaded) {
-    console.debug("Loaded all images");
+  if (allImagesProcessed) {
+    console.debug("Processed all images");
   }
 
   const handleErrorModalClose = useCallback(() => {
@@ -146,19 +145,22 @@ function Scanner({
         console.debug("Scanning image", region.image.id);
         setProgress((p) => (p += 1));
       });
-      console.log("scan results", scanResults);
+      console.debug("scan results", scanResults);
 
       const newHistory = processHistory(scanResults);
-      console.log("newHistory", newHistory);
+      console.debug("newHistory", newHistory);
 
+      // Saving history to browser storage
       saveHistory(newHistory);
+
+      // Showing the model with scan results
       setScanResultTable(newHistory);
 
       // Set scanned images only after data state is set
       // to avoid inconsistent cache
       setScannedImages((oldImages) => ({
         ...oldImages,
-        // Reducing our array of newly scanned rectangles into a object of hashes
+        // Reducing our array of newly scanned images into a object of hashes
         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
           acc[cur.image.id] = true;
           return acc;
@@ -171,14 +173,13 @@ function Scanner({
     // Cleanup
     // Reset scan state
     clearScanQueue();
-    setIsScanning(false);
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
   return (
     <>
-      {!allImagesLoaded && <ProgressIndicator />}
+      {!allImagesProcessed && <ProgressIndicator />}
 
-      {allImagesLoaded && !isScanning && !allImagesScanned && (
+      {allImagesProcessed && !isScanning && !allImagesScanned && (
         <button type="button" className="btn btn-scan" onClick={handleClick}>
           Scan ({scanQueue.length})
         </button>

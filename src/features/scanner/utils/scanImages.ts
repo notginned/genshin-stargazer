@@ -1,5 +1,5 @@
 // import { PaddleOCR } from "@paddleocr/paddleocr-js";
-import type { ScanRegions, ScanResult } from "./scan.types";
+import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { PaddleOcrService } from "ppu-paddle-ocr/web";
 
@@ -54,7 +54,7 @@ const service = new PaddleOcrService({
   }
 } */
 
-const cropRegion = (img, rectangle) => {
+const cropRegion = (img: HTMLCanvasElement, rectangle: Rectangle) => {
   const canvas = document.createElement("canvas");
   canvas.width = rectangle.width;
   canvas.height = rectangle.height;

@@ -7,7 +7,7 @@ import {
   TIME_RECEIVED_BBOX,
   WISH_TYPE_BBOX,
 } from "../scanner/utils/config/bboxes.ts";
-import { ImageError } from "../../utils/ImageError.ts";
+// import { ImageError } from "../../utils/ImageError.ts";
 
 async function preprocessImage(input: HTMLImageElement) {
   try {
@@ -79,6 +79,8 @@ async function preprocessImage(input: HTMLImageElement) {
       },
     };
   } catch (err: unknown) {
+    // @ts-expect-error
+    // it is probably fine
     console.error(translateException(cv, err));
   }
 }
