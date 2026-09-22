@@ -9,8 +9,9 @@ import {
 } from "../scanner/utils/config/bboxes.ts";
 import { ImageError } from "../../utils/ImageError.ts";
 
-async function preprocessImage(input: HTMLImageElement, output: HTMLCanvasElement) {
+async function preprocessImage(input: HTMLImageElement) {
   try {
+    const output = document.createElement("canvas");
     const cv = await getOpenCv();
     const src = cv.imread(input);
     const dst = new cv.Mat();
@@ -69,10 +70,13 @@ async function preprocessImage(input: HTMLImageElement, output: HTMLCanvasElemen
     dst.delete();
 
     return {
-      top: minY,
-      left: minX,
-      height,
-      width,
+      image: output,
+      rectangle: {
+        top: minY,
+        left: minX,
+        height,
+        width,
+      },
     };
   } catch (err: unknown) {
     console.error(translateException(cv, err));
@@ -106,18 +110,18 @@ function calcRegions(image: HTMLCanvasElement, offset: Rectangle): ScanRegions {
   } satisfies ScanRegions;
 }
 
-async function getScanRegion(inputEl: HTMLImageElement, outputEl: HTMLCanvasElement) {
-  const offset = await preprocessImage(inputEl, outputEl);
+async function getScanRegion(inputEl: HTMLImageElement) {
+  const output = await preprocessImage(inputEl);
 
-  if (!offset) throw new Error("No offset found. Couldn't process image");
+  if (!output) throw new Error("No offset found. Couldn't process image");
+  console.log("processing", output);
 
-  const region = calcRegions(outputEl, offset);
+  const region = calcRegions(output.image, output.rectangle);
   console.log("region", region);
-  
 
   // There is a NaN or Infinity hidden in our rectangles' bounds
   // This means the image was not a valid wish history screenshot
-/*   if (
+  /*   if (
     Object.values(region).some((rect) =>
       Object.values(rect).some((value) => Number.isNaN(value) || !Number.isFinite(value)),
     )

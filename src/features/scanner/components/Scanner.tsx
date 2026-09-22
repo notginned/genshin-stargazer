@@ -106,11 +106,10 @@ function Scanner({
         }
 
         const inputEl = document.querySelector<HTMLImageElement>("#" + hash);
-        const canvasEl = document.querySelector<HTMLCanvasElement>("#" + "canvas" + "_" + hash);
 
-        if (inputEl === null || canvasEl === null) throw new Error("Can't find image to process");
+        if (inputEl === null) throw new Error("Can't find image to process");
 
-        const newScanRegion = await getScanRegion(inputEl, canvasEl);
+        const newScanRegion = await getScanRegion(inputEl);
 
         setProcessedImages((prevHashes) => ({
           ...prevHashes,
@@ -196,7 +195,6 @@ function Scanner({
               alt="sample"
               onLoad={() => handleLoad(hash)}
             ></img>
-            <canvas id={"canvas" + "_" + hash} className="out_image" />
           </Fragment>
         ))}
       </section>
