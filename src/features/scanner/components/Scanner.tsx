@@ -156,7 +156,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
       // Saving history to browser storage
       saveHistory(newHistory);
 
-      // Showing the model with scan results
+      // Showing the modal with scan results
       setScanResultTable(newHistory);
 
       // Set scanned images only after data state is set
@@ -217,7 +217,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         {error instanceof ImageError && (
           <img src={error?.image.src} alt="error-image" className="error-image" />
         )}
-        <div className="error-model-btn-wrapper">
+        <div className="error-modal-btn-wrapper">
           <button
             className="btn"
             onClick={async () =>
