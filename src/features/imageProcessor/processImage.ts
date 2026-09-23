@@ -136,7 +136,7 @@ async function getScanRegion(inputEl: HTMLImageElement): Promise<ScanRegions> {
       Object.values(rect).some((value) => Number.isNaN(value) || !Number.isFinite(value)),
     )
   ) {
-    throw new ImageError("There was a problem scanning this image.", inputEl);
+    throw new ImageError("Not a valid wish history screenshot", inputEl);
   }
 
   return region;
