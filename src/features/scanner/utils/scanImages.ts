@@ -7,7 +7,7 @@ import { PaddleOcrService } from "ppu-paddle-ocr/web";
 export const service = new PaddleOcrService({
   debugging: {
     debug: false,
-    verbose: true,
+    verbose: false,
   },
   session: {
     executionMode: "parallel",
