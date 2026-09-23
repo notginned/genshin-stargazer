@@ -15,6 +15,7 @@ import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { isNull } from "./utils/lib.ts";
 
 function App() {
   function saveHistory(newHistory: WishHistory) {
@@ -22,7 +23,7 @@ function App() {
   }
 
   function handleClearHistory() {
-    if (clearHistoryDialogRef.current === null) return;
+    if (isNull(clearHistoryDialogRef.current)) return;
     localStorage.clear();
     clearHistoryDialogRef.current.close();
     window.location.reload();
@@ -37,7 +38,7 @@ function App() {
   const clearHistoryDialogRef = useRef<HTMLDialogElement>(null);
 
   const getTables = () => {
-    if (tablesRef.current === null) {
+    if (isNull(tablesRef.current)) {
       tablesRef.current = {};
     }
 

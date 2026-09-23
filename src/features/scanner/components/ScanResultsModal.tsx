@@ -2,17 +2,14 @@ import type { Dispatch, RefObject, SetStateAction } from "react";
 import { Modal } from "../../../components/Modal.tsx";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { createEmptyWishHistory } from "../../../utils/createEmptyWishHistory.ts";
+import type { Nullable } from "../../../types/lib.types.ts";
 
 interface ScanResultsModalProps {
-  ref: RefObject<HTMLDialogElement | null>;
-  scanResultTable: WishHistory | null;
-  setScanResultTable: Dispatch<SetStateAction<WishHistory | null>>;
+  ref: RefObject<Nullable<HTMLDialogElement>>;
+  scanResultTable: Nullable<WishHistory>;
+  setScanResultTable: Dispatch<SetStateAction<Nullable<WishHistory>>>;
 }
-function ScanResultsModal({
-  ref,
-  scanResultTable,
-  setScanResultTable,
-}: ScanResultsModalProps) {
+function ScanResultsModal({ ref, scanResultTable, setScanResultTable }: ScanResultsModalProps) {
   // This should never happen but we have to avoid early return so that the ref is set properly
   if (!scanResultTable) scanResultTable = createEmptyWishHistory();
 
@@ -22,12 +19,7 @@ function ScanResultsModal({
   const beginnersCount = scanResultTable.beginners_wish.length;
   const chronicledCount = scanResultTable.chronicled_wish.length;
 
-  const total =
-    characterCount +
-    weaponCount +
-    permanentCount +
-    beginnersCount +
-    chronicledCount;
+  const total = characterCount + weaponCount + permanentCount + beginnersCount + chronicledCount;
 
   return (
     <Modal

@@ -1,11 +1,4 @@
-import {
-  Fragment,
-  useCallback,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { Fragment, useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { scanImages } from "../utils/scanImages.ts";
 import type { ScanRegions } from "../utils/scan.types.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
@@ -17,6 +10,8 @@ import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
+import { isNull } from "../../../utils/lib.ts";
+import { Nullable } from "../../../types/lib.types.ts";
 
 interface ScannerProps {
   images: Images;
@@ -24,22 +19,14 @@ interface ScannerProps {
   saveHistory: (newHistory: WishHistory) => void;
 }
 
-function Scanner({
-  images,
-  setImages,
-  saveHistory,
-}: ScannerProps) {
+function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const [progress, setProgress] = useState(1);
   const [isScanning, setIsScanning] = useState(false);
-  const [error, setError] = useState<ImageError | null>(null);
-  const errorModalRef = useRef<HTMLDialogElement | null>(null);
-  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
-    "scannedImages",
-    {}
-  );
+  const [error, setError] = useState<Nullable<ImageError>>(null);
+  const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
+  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>("scannedImages", {});
 
   const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
-
 
   // There was an error processing the image
   if (error) {
@@ -55,8 +42,8 @@ function Scanner({
   // +1 so that the progress isn't 100% from the start for single images
   const progressPercent = Math.round((progress * 100) / (scanQueue.length + 1));
 
-  const [scanResultTable, setScanResultTable] = useState<WishHistory | null>(null);
-  const resultsModalRef = useRef<HTMLDialogElement | null>(null);
+  const [scanResultTable, setScanResultTable] = useState<Nullable<WishHistory>>(null);
+  const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
 
   if (scanResultTable) {
     if (resultsModalRef.current) resultsModalRef.current.showModal();
@@ -106,7 +93,7 @@ function Scanner({
 
         const inputEl = document.querySelector<HTMLImageElement>("#" + hash);
 
-        if (inputEl === null) throw new Error("Can't find image to process");
+        if (isNull(inputEl)) throw new Error("Can't find image to process");
 
         const newScanRegion = await getScanRegion(inputEl);
 
@@ -166,13 +153,13 @@ function Scanner({
           return acc;
         }, {}),
       }));
+
+      // Cleanup
+      // Reset scan state
+      clearScanQueue();
     } catch (error) {
       if (error instanceof ImageError) setError(error);
     }
-
-    // Cleanup
-    // Reset scan state
-    clearScanQueue();
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
   return (

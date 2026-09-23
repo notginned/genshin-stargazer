@@ -1,8 +1,9 @@
 import type { RefObject } from "react";
 import type React from "react";
+import type { Nullable } from "../types/lib.types";
 
 interface ModalProps extends React.DialogHTMLAttributes<HTMLDialogElement> {
-  ref?: RefObject<HTMLDialogElement | null>;
+  ref?: RefObject<Nullable<HTMLDialogElement>>;
   title: string;
 }
 
