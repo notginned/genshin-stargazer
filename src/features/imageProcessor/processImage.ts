@@ -8,7 +8,7 @@ import {
   WISH_TYPE_BBOX,
 } from "../scanner/utils/config/bboxes.ts";
 import { log } from "../../utils/lib.ts";
-// import { ImageError } from "../../utils/ImageError.ts";
+import { ImageError } from "../../utils/ImageError.ts";
 
 async function preprocessImage(input: HTMLImageElement) {
   try {
@@ -18,7 +18,6 @@ async function preprocessImage(input: HTMLImageElement) {
 
     // Copy image hash to our processed canvas
     output.dataset.hash = input.dataset.hash;
-
 
     const cv = await getOpenCv();
     const src = cv.imread(input);
@@ -96,7 +95,7 @@ async function preprocessImage(input: HTMLImageElement) {
 function getRectangle(
   bbox: bbox,
   offset: { top: number; left: number; height: number; width: number },
-): Tesseract.Rectangle {
+): Rectangle {
   return {
     top: offset.top + bbox.TOP_RATIO * offset.height,
     left: offset.left + bbox.LEFT_RATIO * offset.width,
@@ -113,14 +112,16 @@ function calcRegions(image: HTMLCanvasElement, offset: Rectangle): ScanRegions {
 
   return {
     image,
-    itemNameRectangle,
-    typeRectangle,
-    timeRectangle,
-    pageRectangle,
+    rectangles: {
+      itemNameRectangle,
+      typeRectangle,
+      timeRectangle,
+      pageRectangle,
+    },
   } satisfies ScanRegions;
 }
 
-async function getScanRegion(inputEl: HTMLImageElement) {
+async function getScanRegion(inputEl: HTMLImageElement): Promise<ScanRegions> {
   const output = await preprocessImage(inputEl);
 
   if (!output) throw new Error("No offset found. Couldn't process image");
@@ -131,13 +132,13 @@ async function getScanRegion(inputEl: HTMLImageElement) {
 
   // There is a NaN or Infinity hidden in our rectangles' bounds
   // This means the image was not a valid wish history screenshot
-  /*   if (
-    Object.values(region).some((rect) =>
+  if (
+    Object.values(region.rectangles).some((rect) =>
       Object.values(rect).some((value) => Number.isNaN(value) || !Number.isFinite(value)),
     )
   ) {
     throw new ImageError("There was a problem scanning this image.", inputEl);
-  } */
+  }
 
   return region;
 }

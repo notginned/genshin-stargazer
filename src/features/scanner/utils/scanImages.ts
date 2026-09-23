@@ -11,7 +11,8 @@ const service = new PaddleOcrService({
   },
   session: {
     executionMode: "parallel",
-    executionProviders: ["wasm", "cuda"],
+    // Removing other backends breaks parallel processing for some reason??
+    executionProviders: ["wasm", "webgpu", "cuda"],
   },
 });
 
@@ -39,10 +40,10 @@ const scanSingleImage = async (region: ScanRegions) => {
   const res: ScanResult = {} as ScanResult;
 
   const canvases = [
-    region.itemNameRectangle,
-    region.typeRectangle,
-    region.timeRectangle,
-    region.pageRectangle,
+    region.rectangles.itemNameRectangle,
+    region.rectangles.typeRectangle,
+    region.rectangles.timeRectangle,
+    region.rectangles.pageRectangle,
   ].map((r) => cropRegion(region.image, r));
 
   await service.initialize();

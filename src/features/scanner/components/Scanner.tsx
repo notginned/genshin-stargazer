@@ -57,14 +57,17 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
 
   const handleErrorModalClose = useCallback(() => {
     if (!error) return;
-    if (!(error instanceof ImageError)) return;
+    if (!(error instanceof ImageError)) {
+      setError(null);
+      return;
+    }
 
-    setImages({});
     setProcessedImages((prevImages) => {
       const newImages = { ...prevImages };
       delete newImages[error.image.id];
       return newImages;
     });
+    setImages({});
     setError(null);
   }, [setImages, setProcessedImages, error]);
 

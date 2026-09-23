@@ -7,10 +7,12 @@ export interface Rectangle {
 
 export interface ScanRegions {
   image: HTMLCanvasElement;
-  itemNameRectangle: Rectangle;
-  typeRectangle: Rectangle;
-  timeRectangle: Rectangle;
-  pageRectangle: Tesseract.Rectangle;
+  rectangles: {
+    itemNameRectangle: Rectangle;
+    typeRectangle: Rectangle;
+    timeRectangle: Rectangle;
+    pageRectangle: Rectangle;
+  };
 }
 
 export interface bbox {
