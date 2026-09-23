@@ -2,6 +2,7 @@ import { BKTree } from "../../utils/BKTree.ts";
 import type { ScanResult } from "../scanner/utils/scan.types.ts";
 import type { Wish } from "../../types/Wish.types.ts";
 import { itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
+import { log, logDebug } from "../../utils/lib.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;
@@ -15,14 +16,10 @@ function correctName(name: string, tree: BKTree): [string, number] {
   return [result, distance];
 }
 
-function prepareColumn(data: string[], header: string): [string, string[]] {
-  const str = data.join("");
-  const index = str.indexOf(header);
-  const [head, ...items] = str
-    .substring(index)
-    .split("\n")
-    .filter((s) => s.trim() !== "");
-  return [head, items];
+function prepareColumn(data: string): string[] {
+  const [, ...items ] = data.split('\n');
+  return items;
+
 }
 
 function sanitizeSingleItem(name: string, dict: BKTree): [string, number] {
@@ -80,13 +77,15 @@ function parseDate(timestamp: number) {
 function parseScanResults(data: ScanResult): Wish[] {
   const pageNumber = Number(data.pageNumber[0]?.trim());
 
-  const itemNamesCol = prepareColumn(data.itemName, "Item Name")[1];
+  const itemNamesCol = prepareColumn(data.itemName);
   const itemNames = sanitizeItems(itemNamesCol, itemNamesDict);
 
-  const wishTypesCol = prepareColumn(data.wishType, "Wish Type")[1];
+  const wishTypesCol = prepareColumn(data.wishType);
   const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict);
 
-  const timeReceived = prepareColumn(data.timeReceived, "Time Received")[1].map(
+  // First 10 characters are YY-MM-DD
+  // Rest are hh:mm:ss
+  const timeReceived = prepareColumn(data.timeReceived).map(
     (time) =>
       new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf()
   );
@@ -102,6 +101,8 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
+  log("data", data);
+  logDebug("wish", wishes);
   return wishes;
 }
 

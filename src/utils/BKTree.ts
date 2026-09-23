@@ -1,3 +1,6 @@
+import type { Nullable } from "../types/lib.types";
+import { isNull } from "./lib";
+
 function lDistance(s: string, t: string): number {
   if (s === "") return t.length;
   if (t === "") return s.length;
@@ -52,7 +55,7 @@ class Node<T> {
 }
 
 export class BKTree {
-  root: Node<string> | null;
+  root: Nullable<Node<string>>;
 
   constructor(strings?: string[]) {
     const unique = Array.from(new Set(strings));
@@ -64,7 +67,7 @@ export class BKTree {
   }
 
   add(str: string, root = this.root): Node<string> {
-    if (root === null) return (this.root = new Node(str));
+    if (isNull(root)) return (this.root = new Node(str));
 
     const distance = lDistance(str, root.data);
 
@@ -79,7 +82,7 @@ export class BKTree {
   }
 
   search(str: string, radius = 2): [string, number][] {
-    if (this.root === null) return [];
+    if (isNull(this.root)) return [];
 
     const candidates = [this.root];
     const results: [string, number][] = [];

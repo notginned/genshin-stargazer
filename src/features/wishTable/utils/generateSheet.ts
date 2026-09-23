@@ -2,6 +2,8 @@ import { utils, writeFileXLSX } from "xlsx";
 import type { EventToTable } from "../../../types/Table.types.ts";
 import { getMaxColumnWidths } from "./getMaxColumnWidth.ts";
 import { parseDate } from "../../dataParser/parseData.ts";
+import type { Nullable } from "../../../types/lib.types.ts";
+import { isNull } from "../../../utils/lib.ts";
 
 function tablesToSheets(tables: EventToTable) {
   return {
@@ -13,8 +15,8 @@ function tablesToSheets(tables: EventToTable) {
   };
 }
 
-export function generateSheet(tables: EventToTable | null) {
-  if (tables === null) throw new Error("Couldnt get tables");
+export function generateSheet(tables: Nullable<EventToTable>) {
+  if (isNull(tables)) throw new Error("Couldnt get tables");
 
   const workbook = utils.book_new();
 

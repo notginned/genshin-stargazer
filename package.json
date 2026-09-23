@@ -14,32 +14,28 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.2",
     "@techstark/opencv-js": "^4.11.0-release.1",
+    "onnxruntime-web": "^1.30.0",
+    "ppu-paddle-ocr": "^6.6.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "tesseract.js": "^6.0.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
-    "@eslint/js": "^9.33.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react-swc": "^4.0.0",
-    "eslint": "^9.33.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "jsdom": "^27.0.0",
-    "prettier": "^3.8.1",
-    "tsx": "^4.20.5",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
   },
   "allowScripts": {
     "@swc/core@1.16.1": true,
     "esbuild@0.28.2": true,
-    "tesseract.js@6.0.1": true
+    "protobufjs@7.6.6": true
   }
 }

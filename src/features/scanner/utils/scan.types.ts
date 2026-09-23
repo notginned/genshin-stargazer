@@ -1,7 +1,18 @@
+export interface Rectangle {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 export interface ScanRegions {
   image: HTMLCanvasElement;
-  rectangles: Tesseract.Rectangle[];
-  pageRectangle: Tesseract.Rectangle;
+  rectangles: {
+    itemNameRectangle: Rectangle;
+    typeRectangle: Rectangle;
+    timeRectangle: Rectangle;
+    pageRectangle: Rectangle;
+  };
 }
 
 export interface bbox {
@@ -12,8 +23,8 @@ export interface bbox {
 }
 
 export interface ScanResult {
-  itemName: string[];
-  wishType: string[];
-  timeReceived: string[];
-  pageNumber: string[];
+  itemName: string;
+  wishType: string;
+  timeReceived: string;
+  pageNumber: string;
 }

@@ -19,6 +19,7 @@
     font-size: calc(16px + 6 * ((100vw - 320px) / 680));
   }
 }
+
 @media screen and (min-width: 1000px) {
   html {
     font-size: 22px;
@@ -27,11 +28,13 @@
 
 /* bree-serif-regular - latin */
 @font-face {
-  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-display: swap;
+  /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
   font-family: "Bree Serif";
   font-style: normal;
   font-weight: 400;
-  src: url("./assets/fonts/bree-serif-v18-latin-regular.woff2") format("woff2"); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url("./assets/fonts/bree-serif-v18-latin-regular.woff2") format("woff2");
+  /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 :root,
@@ -49,21 +52,19 @@ body {
   place-items: center;
   justify-content: center;
   background: #b8d2dc;
-  background: radial-gradient(
-    circle,
-    rgba(184, 210, 220, 1) 0%,
-    rgba(155, 187, 208, 1) 16%,
-    rgba(202, 208, 216, 1) 31%,
-    rgba(90, 127, 170, 1) 54%,
-    rgba(126, 175, 224, 1) 67%,
-    rgba(178, 200, 214, 1) 85%,
-    rgba(145, 178, 202, 1) 100%
-  );
+  background: radial-gradient(circle,
+      rgba(184, 210, 220, 1) 0%,
+      rgba(155, 187, 208, 1) 16%,
+      rgba(202, 208, 216, 1) 31%,
+      rgba(90, 127, 170, 1) 54%,
+      rgba(126, 175, 224, 1) 67%,
+      rgba(178, 200, 214, 1) 85%,
+      rgba(145, 178, 202, 1) 100%);
 }
 
 .images {
   position: relative;
-  height: 0;
+  /* height: 0; */
   overflow: hidden;
 }
 
@@ -84,8 +85,7 @@ body {
 .dialog-modal-card {
   border-width: 8px;
   border-style: solid;
-  border-image: linear-gradient(
-      330deg,
+  border-image: linear-gradient(330deg,
       rgba(144, 126, 91, 1) 0%,
       rgba(107, 89, 73, 1) 2%,
       rgba(76, 81, 111, 1) 6%,
@@ -99,9 +99,7 @@ body {
       rgba(153, 134, 103, 1) 81%,
       rgba(95, 127, 147, 1) 89%,
       rgba(74, 79, 109, 1) 93%,
-      rgba(145, 178, 202, 1) 100%
-    )
-    1;
+      rgba(145, 178, 202, 1) 100%) 1;
 }
 
 main {
@@ -130,16 +128,20 @@ h3 {
   color: var(--heading-fg-color);
 }
 
+h1:has(.heading-container) {
+  align-self: flex-start;
+  margin: 0;
+}
+
+
 .toolbar {
   display: grid;
   grid-template-areas:
-    "heading heading"
-    "btn-scan btn-export"
-    ". btn-delete"
-    "btn-add btn-delete";
+    "btn-add btn-delete"
+    "btn-scan btn-export";
 
   width: 100%;
-  gap: 12px;
+  gap: 32px;
 
   & .top-bar {
     width: 100%;
@@ -148,9 +150,6 @@ h3 {
     place-items: center;
   }
 
-  h1 {
-    grid-area: heading;
-  }
 }
 
 .btn {
@@ -197,7 +196,6 @@ h3 {
 .btn-delete {
   grid-area: btn-delete;
   justify-self: end;
-  align-self: end;
   background-color: #ebd9b4;
   box-shadow: 0px 0px 0px 2px #fffaee, 0px 0px 0px 3px #f1e0bc,
     0px 0px 0px 4px #ddc794;
@@ -206,6 +204,7 @@ h3 {
 .btn-export {
   grid-area: btn-export;
   justify-self: end;
+  align-self: end;
 }
 
 .wish-type-container {
@@ -246,7 +245,7 @@ h3 {
     place-content: center;
     place-items: center;
   }
-  
+
   .btn {
     padding: 6px;
   }
@@ -302,7 +301,7 @@ select {
   }
 }
 
-.instructions + .btn {
+.instructions+.btn {
   align-self: start;
 }
 
@@ -411,10 +410,15 @@ dialog {
   margin-top: 24px;
 }
 
-.error-modal > img {
+.error-modal>img {
   box-shadow: 0px 0px 0px 2px #f4ddb4, 0px 0px 0px 3px #fffaee,
     0px 0px 0px 4px #f4ddb4;
   max-width: min(50vw, 60vh);
+}
+
+.error-modal-btn-wrapper {
+  display: flex;
+  gap: 16px;
 }
 
 .results-modal {
@@ -431,20 +435,42 @@ dialog {
   overflow: hidden;
 }
 
-.src_image,
-.out_image {
+.src_image {
   position: absolute;
   top: 0;
   left: 0;
   visibility: collapse;
 }
 
+.out_image {
+  visibility: initial
+}
+
+.scanner-fallback {
+  grid-area: btn-scan;
+  display: flex;
+  gap: 8px;
+  
+  & span {
+    width: min-content;
+  }
+}
+
+.progress-wrapper {
+  align-self: center;
+}
+
 .progress-label {
-  width: 65px;
-  height: 50px;
+  position: relative;
+  margin-top: 8px;
+  /* Half of width */
+  margin-left: 1.75rem;
+  width: min-content;
+  aspect-ratio: 1;
   border-radius: 100%;
   background-color: #eeebe5;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   place-items: center;
   place-content: center;
 
@@ -454,21 +480,16 @@ dialog {
     width: 100%;
   }
 
-  &:after {
-    content: attr(data-value);
-    margin: auto;
-    animation: 2s rotate cubic-bezier(0.85, 0.32, 0.20, 0.75) infinite reverse;
-    font-size: 1.2rem;
-    font-weight: 700;
-  }
 }
 
-.progress-wrapper {
+.progress-icon {
+  position: absolute;
   aspect-ratio: 1;
-  width: 55px;
-  height: 65px;
-  background: linear-gradient(#ddc794 30%, transparent 30%);
-  border-radius: 100%;
+  width: 3.5rem;
+  /* background: linear-gradient(#ddc794 30%, transparent 30%); */
+  background: transparent;
+  box-shadow: inset 8px 12px 0px 0px #ddc794;
+  border-radius: 50%;
   display: flex;
   place-content: center;
   place-items: center;

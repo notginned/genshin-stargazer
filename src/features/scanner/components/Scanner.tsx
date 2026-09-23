@@ -1,111 +1,93 @@
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
-import { scanImages } from "../utils/scanImages.ts";
-import type { ScanRegions } from "../utils/scan.types.ts";
+import { use, useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { scanImages, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { getScanRegion } from "../../imageProcessor/processImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
-import type {
-  Images,
-  ProcessedImages,
-  ScannedImages,
-} from "../../../types/State.type.ts";
+import type { Images, ProcessedImages, ScannedImages } from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
-import { getScheduler } from "../utils/Scheduler.ts";
+import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
+import { isNull, logDebug } from "../../../utils/lib.ts";
+import { type Nullable } from "../../../types/lib.types.ts";
+
+let scannerLoaded: null | Promise<void> = null;
+
+const loadScanner = async () => {
+  await service.initialize();
+  return service.destroy();
+};
 
 interface ScannerProps {
   images: Images;
   setImages: Dispatch<SetStateAction<Images>>;
-  scannedImages: ScannedImages;
-  setScannedImages: Dispatch<SetStateAction<ScannedImages>>;
   saveHistory: (newHistory: WishHistory) => void;
-  processedImages: ProcessedImages;
-  setProcessedImages: Dispatch<SetStateAction<ProcessedImages>>;
 }
 
-function Scanner({
-  images,
-  setImages,
-  scannedImages,
-  setScannedImages,
-  processedImages,
-  setProcessedImages,
-  saveHistory,
-}: ScannerProps) {
-  const [progress, setProgress] = useState(1);
-  const [isScanning, setIsScanning] = useState(false);
-  const [error, setError] = useState<ImageError | null>(null);
-  const errorModalRef = useRef<HTMLDialogElement | null>(null);
+function Scanner({ images, setImages, saveHistory }: ScannerProps) {
+  if (!scannerLoaded) {
+    scannerLoaded = loadScanner();
+  }
 
-  const [isReady, setIsReady] = useState(false);
+  use(scannerLoaded);
+
+  const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<Nullable<ImageError | Error>>(null);
+  const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
+  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>("scannedImages", {});
+
+  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
 
   // There was an error processing the image
   if (error) {
-    console.error(error.cause);
+    console.error(error);
     errorModalRef.current?.showModal();
   }
 
   // Happy path
   const scanQueue = Object.values(processedImages).filter(
-    (region) => !scannedImages[region.image.id]
+    (region) => !scannedImages[region.image.dataset.hash!],
   );
+  logDebug("scanQueue", scanQueue);
+  logDebug("processedImages", processedImages);
+  logDebug("scannedImages", scannedImages);
 
-  // +1 so that the progress isn't 100% from the start for single images
-  const progressPercent = Math.round((progress * 100) / (scanQueue.length + 1));
-
-  const [scanResultTable, setScanResultTable] = useState<WishHistory | null>(
-    null
-  );
-  const resultsModalRef = useRef<HTMLDialogElement | null>(null);
+  const [scanResultTable, setScanResultTable] = useState<Nullable<WishHistory>>(null);
+  const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
 
   if (scanResultTable) {
-    if (resultsModalRef.current) resultsModalRef.current.showModal();
+    resultsModalRef.current?.showModal();
   }
 
-  const allImagesLoaded = Object.keys(images).every(
-    (hash) => processedImages[hash]
-  );
+  const allImagesProcessed = Object.keys(images).every((hash) => processedImages[hash]);
 
   const allImagesScanned = scanQueue.length === 0;
 
-  if (allImagesLoaded) {
-    console.debug("Loaded all images");
+  if (allImagesProcessed) {
+    logDebug("Processed all images");
   }
-
-  useEffect(() => {
-    async function waitForReady() {
-      await getScheduler();
-      setIsReady(true);
-    }
-    waitForReady();
-  }, []);
 
   const handleErrorModalClose = useCallback(() => {
     if (!error) return;
+    if (!(error instanceof ImageError)) {
+      clearScanQueue();
+      setError(() => null);
+      return;
+    }
 
-    setImages({});
     setProcessedImages((prevImages) => {
       const newImages = { ...prevImages };
       delete newImages[error.image.id];
       return newImages;
     });
-    setError(null);
-  }, [setImages, setProcessedImages, error]);
+    clearScanQueue();
+    setError(() => null);
+  }, [setImages, scanQueue, setProcessedImages, error]);
 
   const clearScanQueue = useCallback(() => {
     setIsScanning(false);
     setImages({});
-    setProgress(1);
   }, [setImages]);
 
   // Image Processing
@@ -113,7 +95,7 @@ function Scanner({
     async (hash: string) => {
       try {
         if (processedImages[hash]) {
-          console.debug("Already processed");
+          logDebug("Already processed");
 
           setImages((prevImages) => {
             const res = { ...prevImages };
@@ -124,15 +106,11 @@ function Scanner({
           return;
         }
 
-        const inputEl = document.querySelector<HTMLImageElement>("#" + hash);
-        const canvasEl = document.querySelector<HTMLCanvasElement>(
-          "#" + "canvas" + "_" + hash
-        );
+        const inputEl = document.querySelector<HTMLImageElement>(`img[data-hash=${hash}]`);
 
-        if (inputEl === null || canvasEl === null)
-          throw new Error("Can't find image to process");
+        if (isNull(inputEl)) throw new Error("Can't find image to process");
 
-        const newScanRegion = await getScanRegion(inputEl, canvasEl);
+        const newScanRegion = await getScanRegion(inputEl);
 
         setProcessedImages((prevHashes) => ({
           ...prevHashes,
@@ -144,100 +122,86 @@ function Scanner({
         }
       }
     },
-    [setImages, processedImages, setProcessedImages]
+    [setImages, processedImages, setProcessedImages],
   );
 
   // Function to handle scanning
   const handleClick = useCallback(async () => {
     if (isScanning) {
-      console.debug("Already scanning");
+      logDebug("Already scanning");
       return;
     }
-    console.debug("clicked", { scanQueue });
+    logDebug("clicked", { scanQueue });
 
     // No new images
     if (scanQueue.length === 0) {
-      console.debug("There are no new images");
+      logDebug("There are no new images");
       clearScanQueue();
       return;
     }
 
     // Critical Section
     setIsScanning(true);
-    console.debug("Start time", new Date());
-    const scheduler = await getScheduler();
-    console.log('scheduler initialized');
-
     try {
-      const scanResults = await scanImages(
-        scanQueue,
-        scheduler,
-        (region: ScanRegions) => {
-          console.debug("Scanning image", region.image.id);
-          setProgress((p) => (p += 1));
-        }
-      );
-      const newHistory = processHistory(scanResults);
+      const scanResults = await scanImages(scanQueue);
+      logDebug("scan results", scanResults);
 
+      if (scanResults.some((r) => r.itemName.length === 0)) {
+        throw new Error("Could not scan image");
+      }
+
+      const newHistory = processHistory(scanResults);
+      logDebug("newHistory", newHistory);
+
+      // Saving history to browser storage
       saveHistory(newHistory);
+
+      // Showing the modal with scan results
       setScanResultTable(newHistory);
 
       // Set scanned images only after data state is set
       // to avoid inconsistent cache
       setScannedImages((oldImages) => ({
         ...oldImages,
-        // Reducing our array of newly scanned rectangles into a object of hashes
+        // Reducing our array of newly scanned images into a object of hashes
         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
-          acc[cur.image.id] = true;
+          acc[cur.image.dataset.hash!] = true;
           return acc;
         }, {}),
       }));
     } catch (error) {
-      if (error instanceof ImageError) setError(error);
-    }
+      console.error("Error scanning images", error);
 
-    // Cleanup
-    // Reset scan state
-    clearScanQueue();
-    // await scheduler.terminate();
-    setIsScanning(false);
+      if (!(error instanceof Error)) return;
+      setError(error);
+    } finally {
+      // Cleanup
+      // Reset scan state
+      clearScanQueue();
+    }
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
   return (
     <>
-      {!allImagesLoaded && <ProgressIndicator />}
+      {!allImagesProcessed && <ProgressIndicator />}
 
-      {allImagesLoaded &&
-        !isScanning &&
-        !allImagesScanned &&
-        (isReady ? (
-          <button type="button" className="btn btn-scan" onClick={handleClick}>
-            Scan ({scanQueue.length})
-          </button>
-        ) : (
-          <div>
-            <p>
-              Downloading data for the scanner.
-              <br />
-              This may take a minute the first time.
-            </p>
-            <ProgressIndicator />
-          </div>
-        ))}
-      {isScanning && <ProgressIndicator value={progressPercent.toString()} />}
+      {allImagesProcessed && !isScanning && !allImagesScanned && (
+        <button type="button" className="btn btn-scan" onClick={handleClick}>
+          Scan ({scanQueue.length})
+        </button>
+      )}
+      {isScanning && <ProgressIndicator />}
 
       <section className="images">
         {Object.entries(images).map(([hash, src]) => (
-          <Fragment key={hash}>
-            <img
-              className="src_image"
-              id={hash}
-              src={src}
-              alt="sample"
-              onLoad={() => handleLoad(hash)}
-            ></img>
-            <canvas id={"canvas" + "_" + hash} className="out_image" />
-          </Fragment>
+          <img
+            key={hash}
+            className="src_image"
+            data-hash={hash}
+            src={src}
+            alt="sample"
+            onLoad={() => handleLoad(hash)}
+          ></img>
         ))}
       </section>
 
@@ -247,14 +211,26 @@ function Scanner({
         ref={errorModalRef}
         onClose={handleErrorModalClose}
       >
-        <span>
-          {(error?.message || "There was an error processing the image") +
-            " Please reupload the images"}
-        </span>
-        <img src={error?.image.src} alt="error-image" className="error-image" />
-        <button className="btn" onClick={() => errorModalRef.current?.close()}>
-          Okay
-        </button>
+        <p>There was an error processing the image</p>
+        {!isNull(error) && <p>{error.message}</p>}
+        <p>Please retry</p>
+        {error instanceof ImageError && (
+          <img src={error?.image.src} alt="error-image" className="error-image" />
+        )}
+        <div className="error-modal-btn-wrapper">
+          <button
+            className="btn"
+            onClick={async () =>
+              error && navigator.clipboard.writeText(error.message + "\n\n" + error?.stack)
+            }
+          >
+            Copy error
+          </button>
+
+          <button className="btn" onClick={() => errorModalRef.current?.close()}>
+            Okay
+          </button>
+        </div>
       </Modal>
 
       <ScanResultsModal

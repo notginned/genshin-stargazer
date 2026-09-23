@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import "./App.css";
 import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
 import { mergeHistories } from "./features/dataParser/historyReducer.ts";
@@ -10,16 +10,13 @@ import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type {
-  Images,
-  ProcessedImages,
-  ScannedImages,
-} from "./types/State.type.ts";
+import type { Images } from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import { getScheduler } from "./features/scanner/utils/Scheduler.ts";
+import { isNull } from "./utils/lib.ts";
+import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
 
 function App() {
   function saveHistory(newHistory: WishHistory) {
@@ -27,23 +24,12 @@ function App() {
   }
 
   function handleClearHistory() {
-    if (clearHistoryDialogRef.current === null) return;
-    setHistory(createEmptyWishHistory());
-    setScannedImages({});
+    if (isNull(clearHistoryDialogRef.current)) return;
+    localStorage.clear();
     clearHistoryDialogRef.current.close();
     window.location.reload();
   }
-  const [history, setHistory] = useLocalStorage<WishHistory>(
-    "history",
-    createEmptyWishHistory()
-  );
-
-  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
-    "scannedImages",
-    {}
-  );
-
-  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
+  const [history, setHistory] = useLocalStorage<WishHistory>("history", createEmptyWishHistory());
 
   const [images, setImages] = useState<Images>({});
 
@@ -53,69 +39,51 @@ function App() {
   const clearHistoryDialogRef = useRef<HTMLDialogElement>(null);
 
   const getTables = () => {
-    if (tablesRef.current === null) {
+    if (isNull(tablesRef.current)) {
       tablesRef.current = {};
     }
 
     return tablesRef.current;
   };
 
-  // Free tesseract memory on page unload
-  useEffect(() => {
-    document.addEventListener("visibilitychange", async (e: Event) => {
-      if (e.currentTarget === null) return;
-      if (e.currentTarget instanceof Document) {
-        if (e.currentTarget.visibilityState === "hidden") {
-          console.log("unloaded");
-          const scheduler = await getScheduler();
-          await scheduler.terminate();
-        }
-      }
-    });
-  }, []);
-
   return (
     <>
       <main>
         <header>
+          <h1>
+            <AutoAwesomeIcon />
+            <div className="heading-container">
+              <span>Genshin</span>
+              <span>Stargazer</span>
+            </div>
+          </h1>
+
           <div className="toolbar">
-            <h1>
-              <AutoAwesomeIcon />
-              <div className="heading-container">
-                <span>Genshin</span>
-                <span>Stargazer</span>
-              </div>
-            </h1>
-            <button
-              className="btn btn-export"
-              onClick={() => generateSheet(tablesRef.current)}
-            >
+            <button className="btn btn-export" onClick={() => generateSheet(tablesRef.current)}>
               Export <FileDownloadIcon />
             </button>
             <ImagePicker setImages={setImages} images={images} />
-            <Scanner
-              processedImages={processedImages}
-              setProcessedImages={setProcessedImages}
-              images={images}
-              setImages={setImages}
-              scannedImages={scannedImages}
-              setScannedImages={setScannedImages}
-              saveHistory={saveHistory}
-            />
+            <Suspense
+              fallback={
+                <div className="scanner-fallback">
+                  <span>Downloading required components...</span> <ProgressIndicator />
+                </div>
+              }
+            >
+              <Scanner images={images} setImages={setImages} saveHistory={saveHistory} />
+            </Suspense>
 
             <button
               className="btn btn-delete"
               onClick={() => clearHistoryDialogRef.current?.showModal()}
             >
-              Delete history <DeleteIcon />
+              Delete data
+              <DeleteIcon />
             </button>
           </div>
           <div className="wish-type-container">
             <h3>Wish Type</h3>
-            <select
-              name="events"
-              onChange={(e) => setActiveTab(e.target.value)}
-            >
+            <select name="events" onChange={(e) => setActiveTab(e.target.value)}>
               {Object.keys(history).map((event) => (
                 <option key={event} value={event}>
                   {event.split("_").join(" ")} ({history[event].length})
@@ -142,17 +110,10 @@ function App() {
           />
         ))}
       </main>
-      <Modal
-        title="Delete data"
-        className="delete-modal"
-        ref={clearHistoryDialogRef}
-      >
+      <Modal title="Delete data" className="delete-modal" ref={clearHistoryDialogRef}>
         Do you want to delete your history?
         <div className="modal-actions">
-          <button
-            className="btn"
-            onClick={() => clearHistoryDialogRef.current?.close()}
-          >
+          <button className="btn" onClick={() => clearHistoryDialogRef.current?.close()}>
             No
           </button>
           <button className="btn btn-delete" onClick={handleClearHistory}>

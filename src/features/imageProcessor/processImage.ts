@@ -1,19 +1,23 @@
-import type { Rectangle } from "tesseract.js";
 import { getOpenCv, translateException } from "./lib/opencv/opencv.ts";
-import type { bbox, ScanRegions } from "../scanner/utils/scan.types.ts";
+import type { bbox, Rectangle, ScanRegions } from "../scanner/utils/scan.types.ts";
 import {
   ITEM_NAME_BBOX,
   PAGE_COUNT_BBOX,
   TIME_RECEIVED_BBOX,
   WISH_TYPE_BBOX,
 } from "../scanner/utils/config/bboxes.ts";
+import { log } from "../../utils/lib.ts";
 import { ImageError } from "../../utils/ImageError.ts";
 
-async function preprocessImage(
-  input: HTMLImageElement,
-  output: HTMLCanvasElement,
-) {
+async function preprocessImage(input: HTMLImageElement) {
   try {
+    const output = document.createElement("canvas");
+    // Should never happen
+    if (input.dataset.hash === undefined) throw new Error("Image does not exist");
+
+    // Copy image hash to our processed canvas
+    output.dataset.hash = input.dataset.hash;
+
     const cv = await getOpenCv();
     const src = cv.imread(input);
     const dst = new cv.Mat();
@@ -72,12 +76,17 @@ async function preprocessImage(
     dst.delete();
 
     return {
-      top: minY,
-      left: minX,
-      height,
-      width,
+      image: output,
+      rectangle: {
+        top: minY,
+        left: minX,
+        height,
+        width,
+      },
     };
   } catch (err: unknown) {
+    // @ts-expect-error
+    // it is probably fine
     console.error(translateException(cv, err));
   }
 }
@@ -85,7 +94,7 @@ async function preprocessImage(
 function getRectangle(
   bbox: bbox,
   offset: { top: number; left: number; height: number; width: number },
-): Tesseract.Rectangle {
+): Rectangle {
   return {
     top: offset.top + bbox.TOP_RATIO * offset.height,
     left: offset.left + bbox.LEFT_RATIO * offset.width,
@@ -96,34 +105,38 @@ function getRectangle(
 
 function calcRegions(image: HTMLCanvasElement, offset: Rectangle): ScanRegions {
   const pageRectangle = getRectangle(PAGE_COUNT_BBOX, offset);
+  const itemNameRectangle = getRectangle(ITEM_NAME_BBOX, offset);
+  const typeRectangle = getRectangle(WISH_TYPE_BBOX, offset);
+  const timeRectangle = getRectangle(TIME_RECEIVED_BBOX, offset);
 
-  const rectangles = [ITEM_NAME_BBOX, WISH_TYPE_BBOX, TIME_RECEIVED_BBOX].map(
-    (bbox) => getRectangle(bbox, offset),
-  );
-
-  return { image, rectangles, pageRectangle } satisfies ScanRegions;
+  return {
+    image,
+    rectangles: {
+      itemNameRectangle,
+      typeRectangle,
+      timeRectangle,
+      pageRectangle,
+    },
+  } satisfies ScanRegions;
 }
 
-async function getScanRegion(
-  inputEl: HTMLImageElement,
-  outputEl: HTMLCanvasElement,
-) {
-  const offset = await preprocessImage(inputEl, outputEl);
+async function getScanRegion(inputEl: HTMLImageElement): Promise<ScanRegions> {
+  const output = await preprocessImage(inputEl);
 
-  if (!offset) throw new Error("No offset found. Couldn't process image");
+  if (!output) throw new Error("No offset found. Couldn't process image");
+  log("processing", output);
 
-  const region = calcRegions(outputEl, offset);
+  const region = calcRegions(output.image, output.rectangle);
+  log("region", region);
 
   // There is a NaN or Infinity hidden in our rectangles' bounds
   // This means the image was not a valid wish history screenshot
   if (
-    region.rectangles.some((rect) =>
-      Object.values(rect).some(
-        (value) => Number.isNaN(value) || !Number.isFinite(value),
-      ),
+    Object.values(region.rectangles).some((rect) =>
+      Object.values(rect).some((value) => Number.isNaN(value) || !Number.isFinite(value)),
     )
   ) {
-    throw new ImageError("There was a problem scanning this image.", inputEl);
+    throw new ImageError("Not a valid wish history screenshot", inputEl);
   }
 
   return region;
