@@ -2,6 +2,7 @@ import { BKTree } from "../../utils/BKTree.ts";
 import type { ScanResult } from "../scanner/utils/scan.types.ts";
 import type { Wish } from "../../types/Wish.types.ts";
 import { itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
+import { log, logDebug } from "../../utils/lib.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;
@@ -100,8 +101,8 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
-  console.debug("data", data);
-  console.debug("wish", wishes);
+  log("data", data);
+  logDebug("wish", wishes);
   return wishes;
 }
 

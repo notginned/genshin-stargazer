@@ -447,7 +447,8 @@ dialog {
   height: 50px;
   border-radius: 100%;
   background-color: #eeebe5;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   place-items: center;
   place-content: center;
 
@@ -457,21 +458,16 @@ dialog {
     width: 100%;
   }
 
-  &:after {
-    content: attr(data-value);
-    margin: auto;
-    animation: 2s rotate cubic-bezier(0.85, 0.32, 0.20, 0.75) infinite reverse;
-    font-size: 1.2rem;
-    font-weight: 700;
-  }
 }
 
-.progress-wrapper {
+.progress-icon {
+  position: absolute;
   aspect-ratio: 1;
-  width: 55px;
-  height: 65px;
-  background: linear-gradient(#ddc794 30%, transparent 30%);
-  border-radius: 100%;
+  width: 4rem;
+  /* background: linear-gradient(#ddc794 30%, transparent 30%); */
+  background: transparent;
+  box-shadow: inset 8px 12px 0px 0px #ddc794;
+  border-radius: 50%;
   display: flex;
   place-content: center;
   place-items: center;

@@ -1,4 +1,5 @@
 import { createScheduler, createWorker, PSM } from "tesseract.js";
+import { logDebug } from "../../../utils/lib";
 
 class Scheduler {
   static COLUM_PARAMS = {
@@ -66,7 +67,7 @@ const schedulerPromise = new Scheduler().initialize();
 
 async function getScheduler() {
   await schedulerPromise;
-  console.debug("scheduler is ready");
+  logDebug("scheduler is ready");
   return schedulerPromise;
 }
 

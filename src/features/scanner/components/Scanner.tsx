@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { scanImages } from "../utils/scanImages.ts";
-import type { ScanRegions } from "../utils/scan.types.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { getScanRegion } from "../../imageProcessor/processImage.ts";
@@ -10,7 +9,7 @@ import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
-import { isNull } from "../../../utils/lib.ts";
+import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 
 interface ScannerProps {
@@ -20,9 +19,8 @@ interface ScannerProps {
 }
 
 function Scanner({ images, setImages, saveHistory }: ScannerProps) {
-  const [progress, setProgress] = useState(1);
   const [isScanning, setIsScanning] = useState(false);
-  const [error, setError] = useState<Nullable<ImageError>>(null);
+  const [error, setError] = useState<Nullable<ImageError | Error>>(null);
   const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
   const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>("scannedImages", {});
 
@@ -38,12 +36,9 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const scanQueue = Object.values(processedImages).filter(
     (region) => !scannedImages[region.image.dataset.hash!],
   );
-  console.log("scanQueue", scanQueue);
-  console.log("processedImages", processedImages);
-  console.log("scannedImages", scannedImages);
-
-  // +1 so that the progress isn't 100% from the start for single images
-  const progressPercent = Math.round((progress * 100) / (scanQueue.length + 1));
+  logDebug("scanQueue", scanQueue);
+  logDebug("processedImages", processedImages);
+  logDebug("scannedImages", scannedImages);
 
   const [scanResultTable, setScanResultTable] = useState<Nullable<WishHistory>>(null);
   const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
@@ -57,11 +52,12 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const allImagesScanned = scanQueue.length === 0;
 
   if (allImagesProcessed) {
-    console.debug("Processed all images");
+    logDebug("Processed all images");
   }
 
   const handleErrorModalClose = useCallback(() => {
     if (!error) return;
+    if (!(error instanceof ImageError)) return;
 
     setImages({});
     setProcessedImages((prevImages) => {
@@ -75,7 +71,6 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const clearScanQueue = useCallback(() => {
     setIsScanning(false);
     setImages({});
-    setProgress(1);
   }, [setImages]);
 
   // Image Processing
@@ -83,7 +78,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     async (hash: string) => {
       try {
         if (processedImages[hash]) {
-          console.debug("Already processed");
+          logDebug("Already processed");
 
           setImages((prevImages) => {
             const res = { ...prevImages };
@@ -116,14 +111,14 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   // Function to handle scanning
   const handleClick = useCallback(async () => {
     if (isScanning) {
-      console.debug("Already scanning");
+      logDebug("Already scanning");
       return;
     }
-    console.debug("clicked", { scanQueue });
+    logDebug("clicked", { scanQueue });
 
     // No new images
     if (scanQueue.length === 0) {
-      console.debug("There are no new images");
+      logDebug("There are no new images");
       clearScanQueue();
       return;
     }
@@ -131,14 +126,11 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     // Critical Section
     setIsScanning(true);
     try {
-      const scanResults = await scanImages(scanQueue, (region: ScanRegions) => {
-        console.debug("Scanning image", region.image.dataset.hash);
-        setProgress((p) => (p += 1));
-      });
-      console.debug("scan results", scanResults);
+      const scanResults = await scanImages(scanQueue);
+      logDebug("scan results", scanResults);
 
       const newHistory = processHistory(scanResults);
-      console.debug("newHistory", newHistory);
+      logDebug("newHistory", newHistory);
 
       // Saving history to browser storage
       saveHistory(newHistory);
@@ -152,14 +144,16 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         ...oldImages,
         // Reducing our array of newly scanned images into a object of hashes
         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
-          console.log("reducer", cur);
+          logDebug("reducer", cur);
           acc[cur.image.dataset.hash!] = true;
           return acc;
         }, {}),
       }));
     } catch (error) {
-      if (error instanceof ImageError) setError(error);
-      console.error("Error scanning images");
+      console.error("Error scanning images", error);
+      if (!(error instanceof Error)) return;
+
+      setError(error);
     } finally {
       // Cleanup
       // Reset scan state
@@ -176,7 +170,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
           Scan ({scanQueue.length})
         </button>
       )}
-      {isScanning && <ProgressIndicator value={progressPercent.toString()} />}
+      {isScanning && <ProgressIndicator value={"Scanning"} />}
 
       <section className="images">
         {Object.entries(images).map(([hash, src]) => (
@@ -197,14 +191,25 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         ref={errorModalRef}
         onClose={handleErrorModalClose}
       >
-        <span>
-          {(error?.message || "There was an error processing the image") +
-            " Please reupload the images"}
-        </span>
-        <img src={error?.image.src} alt="error-image" className="error-image" />
-        <button className="btn" onClick={() => errorModalRef.current?.close()}>
-          Okay
-        </button>
+        <p>{error?.message || "There was an error processing the image"}</p>
+        <p>Please retry</p>
+        {error instanceof ImageError && (
+          <img src={error?.image.src} alt="error-image" className="error-image" />
+        )}
+        <div className="error-model-btn-wrapper">
+          <button
+            className="btn"
+            onClick={async () =>
+              error && navigator.clipboard.writeText(error.message + "\n\n" + error?.stack)
+            }
+          >
+            Copy error
+          </button>
+
+          <button className="btn" onClick={() => errorModalRef.current?.close()}>
+            Okay
+          </button>
+        </div>
       </Modal>
 
       <ScanResultsModal

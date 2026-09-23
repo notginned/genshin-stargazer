@@ -1,4 +1,5 @@
 // import { PaddleOCR } from "@paddleocr/paddleocr-js";
+import { logDebug } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { PaddleOcrService } from "ppu-paddle-ocr/web";
@@ -34,7 +35,7 @@ const cropRegion = (img: HTMLCanvasElement, rectangle: Rectangle) => {
   return canvas;
 };
 
-const ocrRegions = async (region: ScanRegions) => {
+const scanSingleImage = async (region: ScanRegions) => {
   const res: ScanResult = {} as ScanResult;
 
   const canvases = [
@@ -58,12 +59,12 @@ const ocrRegions = async (region: ScanRegions) => {
 
 export async function scanImages(
   regions: ScanRegions[],
-  callback: (region: ScanRegions) => void,
+  callback: (region: ScanRegions) => void = (region) => logDebug(region),
 ): Promise<ScanResult[]> {
   const res = await Promise.all(
     regions.map(async (region) => {
       callback(region);
-      return ocrRegions(region);
+      return scanSingleImage(region);
     }),
   );
 

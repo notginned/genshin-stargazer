@@ -7,6 +7,7 @@ import {
   TIME_RECEIVED_BBOX,
   WISH_TYPE_BBOX,
 } from "../scanner/utils/config/bboxes.ts";
+import { log } from "../../utils/lib.ts";
 // import { ImageError } from "../../utils/ImageError.ts";
 
 async function preprocessImage(input: HTMLImageElement) {
@@ -123,10 +124,10 @@ async function getScanRegion(inputEl: HTMLImageElement) {
   const output = await preprocessImage(inputEl);
 
   if (!output) throw new Error("No offset found. Couldn't process image");
-  console.log("processing", output);
+  log("processing", output);
 
   const region = calcRegions(output.image, output.rectangle);
-  console.log("region", region);
+  log("region", region);
 
   // There is a NaN or Infinity hidden in our rectangles' bounds
   // This means the image was not a valid wish history screenshot
