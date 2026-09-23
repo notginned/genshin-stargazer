@@ -1,5 +1,5 @@
 import { getOpenCv, translateException } from "./lib/opencv/opencv.ts";
-import type { bbox, ScanRegions } from "../scanner/utils/scan.types.ts";
+import type { bbox, Rectangle, ScanRegions } from "../scanner/utils/scan.types.ts";
 import {
   ITEM_NAME_BBOX,
   PAGE_COUNT_BBOX,
