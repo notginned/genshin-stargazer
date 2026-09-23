@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
 import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
 import { mergeHistories } from "./features/dataParser/historyReducer.ts";
@@ -10,11 +10,7 @@ import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type {
-  Images,
-  ProcessedImages,
-  ScannedImages,
-} from "./types/State.type.ts";
+import type { Images } from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -31,11 +27,7 @@ function App() {
     clearHistoryDialogRef.current.close();
     window.location.reload();
   }
-  const [history, setHistory] = useLocalStorage<WishHistory>(
-    "history",
-    createEmptyWishHistory()
-  );
-
+  const [history, setHistory] = useLocalStorage<WishHistory>("history", createEmptyWishHistory());
 
   const [images, setImages] = useState<Images>({});
 
@@ -64,18 +56,11 @@ function App() {
                 <span>Stargazer</span>
               </div>
             </h1>
-            <button
-              className="btn btn-export"
-              onClick={() => generateSheet(tablesRef.current)}
-            >
+            <button className="btn btn-export" onClick={() => generateSheet(tablesRef.current)}>
               Export <FileDownloadIcon />
             </button>
             <ImagePicker setImages={setImages} images={images} />
-            <Scanner
-              images={images}
-              setImages={setImages}
-              saveHistory={saveHistory}
-            />
+            <Scanner images={images} setImages={setImages} saveHistory={saveHistory} />
 
             <button
               className="btn btn-delete"
@@ -86,10 +71,7 @@ function App() {
           </div>
           <div className="wish-type-container">
             <h3>Wish Type</h3>
-            <select
-              name="events"
-              onChange={(e) => setActiveTab(e.target.value)}
-            >
+            <select name="events" onChange={(e) => setActiveTab(e.target.value)}>
               {Object.keys(history).map((event) => (
                 <option key={event} value={event}>
                   {event.split("_").join(" ")} ({history[event].length})
@@ -116,17 +98,10 @@ function App() {
           />
         ))}
       </main>
-      <Modal
-        title="Delete data"
-        className="delete-modal"
-        ref={clearHistoryDialogRef}
-      >
+      <Modal title="Delete data" className="delete-modal" ref={clearHistoryDialogRef}>
         Do you want to delete your history?
         <div className="modal-actions">
-          <button
-            className="btn"
-            onClick={() => clearHistoryDialogRef.current?.close()}
-          >
+          <button className="btn" onClick={() => clearHistoryDialogRef.current?.close()}>
             No
           </button>
           <button className="btn btn-delete" onClick={handleClearHistory}>
