@@ -11,7 +11,7 @@ import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
 import { isNull } from "../../../utils/lib.ts";
-import { Nullable } from "../../../types/lib.types.ts";
+import { type Nullable } from "../../../types/lib.types.ts";
 
 interface ScannerProps {
   images: Images;
@@ -46,7 +46,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
 
   if (scanResultTable) {
-    if (resultsModalRef.current) resultsModalRef.current.showModal();
+    resultsModalRef.current?.showModal();
   }
 
   const allImagesProcessed = Object.keys(images).every((hash) => processedImages[hash]);
@@ -159,6 +159,8 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
       clearScanQueue();
     } catch (error) {
       if (error instanceof ImageError) setError(error);
+      console.error("Error scanning images");
+      clearScanQueue();
     }
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 

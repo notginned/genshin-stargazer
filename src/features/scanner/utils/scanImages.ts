@@ -88,10 +88,10 @@ const ocrRegions = async (region: ScanRegions) => {
   const rps = await service.batchRecognize(canvases);
   await service.destroy();
 
-  res.itemName = rps[0].text.split("\n");
-  res.wishType = rps[1].text.split("\n");
-  res.timeReceived = rps[2].text.split("\n");
-  res.pageNumber = rps[3].text.split("\n");
+  res.itemName = rps[0].text;
+  res.wishType = rps[1].text;
+  res.timeReceived = rps[2].text;
+  res.pageNumber = rps[3].text;
 
   return res;
 };
@@ -100,7 +100,6 @@ export async function scanImages(
   regions: ScanRegions[],
   callback: (region: ScanRegions) => void,
 ): Promise<ScanResult[]> {
-
   const res = await Promise.all(
     regions.map(async (region) => {
       callback(region);

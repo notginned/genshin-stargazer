@@ -21,8 +21,8 @@ export interface bbox {
 }
 
 export interface ScanResult {
-  itemName: string[];
-  wishType: string[];
-  timeReceived: string[];
-  pageNumber: string[];
+  itemName: string;
+  wishType: string;
+  timeReceived: string;
+  pageNumber: string;
 }
