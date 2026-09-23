@@ -58,7 +58,8 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const handleErrorModalClose = useCallback(() => {
     if (!error) return;
     if (!(error instanceof ImageError)) {
-      setError(null);
+      clearScanQueue();
+      setError(() => null);
       return;
     }
 
@@ -67,9 +68,9 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
       delete newImages[error.image.id];
       return newImages;
     });
-    setImages({});
-    setError(null);
-  }, [setImages, setProcessedImages, error]);
+    clearScanQueue();
+    setError(() => null);
+  }, [setImages, scanQueue, setProcessedImages, error]);
 
   const clearScanQueue = useCallback(() => {
     setIsScanning(false);
@@ -132,6 +133,10 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
       const scanResults = await scanImages(scanQueue);
       logDebug("scan results", scanResults);
 
+      if (scanResults.some((r) => r.itemName.length === 0)) {
+        throw new Error("Could not scan image");
+      }
+
       const newHistory = processHistory(scanResults);
       logDebug("newHistory", newHistory);
 
@@ -147,15 +152,14 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         ...oldImages,
         // Reducing our array of newly scanned images into a object of hashes
         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
-          logDebug("reducer", cur);
           acc[cur.image.dataset.hash!] = true;
           return acc;
         }, {}),
       }));
     } catch (error) {
       console.error("Error scanning images", error);
-      if (!(error instanceof Error)) return;
 
+      if (!(error instanceof Error)) return;
       setError(error);
     } finally {
       // Cleanup
@@ -173,7 +177,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
           Scan ({scanQueue.length})
         </button>
       )}
-      {isScanning && <ProgressIndicator value={"Scanning"} />}
+      {isScanning && <ProgressIndicator />}
 
       <section className="images">
         {Object.entries(images).map(([hash, src]) => (
