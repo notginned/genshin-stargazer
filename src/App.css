@@ -128,16 +128,21 @@ h3 {
   color: var(--heading-fg-color);
 }
 
+h1:has(.heading-container) {
+  align-self: flex-start;
+  margin: 0;
+}
+
+
 .toolbar {
   display: grid;
   grid-template-areas:
-    "heading heading"
-    "btn-add btn-export"
+    "btn-add btn-delete"
     ". btn-delete"
-    "btn-scan btn-delete";
+    "btn-scan btn-export";
 
   width: 100%;
-  gap: 12px;
+  gap: 32px;
 
   & .top-bar {
     width: 100%;
@@ -146,9 +151,6 @@ h3 {
     place-items: center;
   }
 
-  h1 {
-    grid-area: heading;
-  }
 }
 
 .btn {
@@ -195,7 +197,6 @@ h3 {
 .btn-delete {
   grid-area: btn-delete;
   justify-self: end;
-  align-self: end;
   background-color: #ebd9b4;
   box-shadow: 0px 0px 0px 2px #fffaee, 0px 0px 0px 3px #f1e0bc,
     0px 0px 0px 4px #ddc794;
@@ -308,8 +309,7 @@ select {
   display: none;
 }
 
-.scanner-fallback {
-}
+.scanner-fallback {}
 
 .table-container {
   margin-top: 20px;
@@ -449,7 +449,7 @@ dialog {
 }
 
 .progress-label {
-  position:relative;
+  position: relative;
   margin: 16px;
   width: 50px;
   aspect-ratio: 1;

@@ -50,14 +50,15 @@ function App() {
     <>
       <main>
         <header>
+          <h1>
+            <AutoAwesomeIcon />
+            <div className="heading-container">
+              <span>Genshin</span>
+              <span>Stargazer</span>
+            </div>
+          </h1>
+
           <div className="toolbar">
-            <h1>
-              <AutoAwesomeIcon />
-              <div className="heading-container">
-                <span>Genshin</span>
-                <span>Stargazer</span>
-              </div>
-            </h1>
             <button className="btn btn-export" onClick={() => generateSheet(tablesRef.current)}>
               Export <FileDownloadIcon />
             </button>
@@ -76,7 +77,7 @@ function App() {
               className="btn btn-delete"
               onClick={() => clearHistoryDialogRef.current?.showModal()}
             >
-              Delete history <DeleteIcon />
+              Wipe data<DeleteIcon />
             </button>
           </div>
           <div className="wish-type-container">

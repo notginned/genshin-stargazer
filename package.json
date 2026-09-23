@@ -36,8 +36,6 @@
   "allowScripts": {
     "@swc/core@1.16.1": true,
     "esbuild@0.28.2": true,
-    "tesseract.js@6.0.1": true,
-    "protobufjs@7.6.6": true,
-    "onnxruntime-node@1.30.0": true
+    "protobufjs@7.6.6": true
   }
 }
