@@ -157,13 +157,13 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
           return acc;
         }, {}),
       }));
-
-      // Cleanup
-      // Reset scan state
-      clearScanQueue();
     } catch (error) {
       if (error instanceof ImageError) setError(error);
       console.error("Error scanning images");
+    } finally {
+      // Cleanup
+      // Reset scan state
+      clearScanQueue();
     }
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
