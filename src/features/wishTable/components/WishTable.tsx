@@ -43,7 +43,7 @@ function WishTable({
               <td>{wish.type}</td>
               <td>{wish.name}</td>
               <td>{wish.timeReceived}</td>
-              <td>{wish.rarity}</td>
+              <td>{wish.rarity[0]}</td>
               <td>{wish.pity}</td>
               <td>{wish.rollNum}</td>
               <td>{wish.group}</td>

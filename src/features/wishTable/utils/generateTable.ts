@@ -127,7 +127,7 @@ const generateTableData = (wishes: Wish[]): WishRow[] => {
       type: getItemType(wish),
       name: wish.itemName,
       timeReceived: parseDate(wish.timeReceived),
-      rarity: rarity[0],
+      rarity: rarity,
       pity: getPity(rarity, pityCounter),
       rollNum: getPerBanner(revWishes, i, pityCounter),
       group: getGroupCount(revWishes, i, pityCounter),
