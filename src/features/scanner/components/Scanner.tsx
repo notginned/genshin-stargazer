@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { scanImages } from "../utils/scanImages.ts";
 import type { ScanRegions } from "../utils/scan.types.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
@@ -36,8 +36,11 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
 
   // Happy path
   const scanQueue = Object.values(processedImages).filter(
-    (region) => !scannedImages[region.image.id],
+    (region) => !scannedImages[region.image.dataset.hash!],
   );
+  console.log("scanQueue", scanQueue);
+  console.log("processedImages", processedImages);
+  console.log("scannedImages", scannedImages);
 
   // +1 so that the progress isn't 100% from the start for single images
   const progressPercent = Math.round((progress * 100) / (scanQueue.length + 1));
@@ -91,11 +94,10 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
           return;
         }
 
-        const inputEl = document.querySelector<HTMLImageElement>("#" + hash);
+        const inputEl = document.querySelector<HTMLImageElement>(`img[data-hash=${hash}]`);
 
         if (isNull(inputEl)) throw new Error("Can't find image to process");
 
-        console.log("hash", hash);
         const newScanRegion = await getScanRegion(inputEl);
 
         setProcessedImages((prevHashes) => ({
@@ -130,7 +132,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     setIsScanning(true);
     try {
       const scanResults = await scanImages(scanQueue, (region: ScanRegions) => {
-        console.debug("Scanning image", region.image.id);
+        console.debug("Scanning image", region.image.dataset.hash);
         setProgress((p) => (p += 1));
       });
       console.debug("scan results", scanResults);
@@ -151,7 +153,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         // Reducing our array of newly scanned images into a object of hashes
         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
           console.log("reducer", cur);
-          acc[cur.image.id] = true;
+          acc[cur.image.dataset.hash!] = true;
           return acc;
         }, {}),
       }));
@@ -162,7 +164,6 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     } catch (error) {
       if (error instanceof ImageError) setError(error);
       console.error("Error scanning images");
-      clearScanQueue();
     }
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
@@ -179,15 +180,14 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
 
       <section className="images">
         {Object.entries(images).map(([hash, src]) => (
-          <Fragment key={hash}>
-            <img
-              className="src_image"
-              id={hash}
-              src={src}
-              alt="sample"
-              onLoad={() => handleLoad(hash)}
-            ></img>
-          </Fragment>
+          <img
+            key={hash}
+            className="src_image"
+            data-hash={hash}
+            src={src}
+            alt="sample"
+            onLoad={() => handleLoad(hash)}
+          ></img>
         ))}
       </section>
 

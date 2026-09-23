@@ -12,8 +12,13 @@ import {
 async function preprocessImage(input: HTMLImageElement) {
   try {
     const output = document.createElement("canvas");
+    // Should never happen
+    if (input.dataset.hash === undefined) throw new Error("Image does not exist");
+
     // Copy image hash to our processed canvas
-    output.id = input.id;
+    output.dataset.hash = input.dataset.hash;
+
+
     const cv = await getOpenCv();
     const src = cv.imread(input);
     const dst = new cv.Mat();
