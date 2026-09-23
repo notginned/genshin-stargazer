@@ -1,4 +1,3 @@
-import type { Rectangle } from "tesseract.js";
 import { getOpenCv, translateException } from "./lib/opencv/opencv.ts";
 import type { bbox, ScanRegions } from "../scanner/utils/scan.types.ts";
 import {

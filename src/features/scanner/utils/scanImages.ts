@@ -4,7 +4,7 @@ import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { PaddleOcrService } from "ppu-paddle-ocr/web";
 
-const service = new PaddleOcrService({
+export const service = new PaddleOcrService({
   debugging: {
     debug: false,
     verbose: true,

@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { scanImages } from "../utils/scanImages.ts";
+import { use, useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { scanImages, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { getScanRegion } from "../../imageProcessor/processImage.ts";
@@ -12,6 +12,13 @@ import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
 import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 
+let scannerLoaded: null | Promise<void> = null;
+
+const loadScanner = async () => {
+  await service.initialize();
+  return service.destroy();
+};
+
 interface ScannerProps {
   images: Images;
   setImages: Dispatch<SetStateAction<Images>>;
@@ -19,6 +26,12 @@ interface ScannerProps {
 }
 
 function Scanner({ images, setImages, saveHistory }: ScannerProps) {
+  if (!scannerLoaded) {
+    scannerLoaded = loadScanner();
+  }
+
+  use(scannerLoaded);
+
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
   const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
@@ -198,7 +211,8 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         ref={errorModalRef}
         onClose={handleErrorModalClose}
       >
-        <p>{error?.message || "There was an error processing the image"}</p>
+        <p>There was an error processing the image</p>
+        {!isNull(error) && <p>{error.message}</p>}
         <p>Please retry</p>
         {error instanceof ImageError && (
           <img src={error?.image.src} alt="error-image" className="error-image" />

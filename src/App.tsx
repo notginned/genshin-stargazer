@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import "./App.css";
 import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
 import { mergeHistories } from "./features/dataParser/historyReducer.ts";
@@ -16,6 +16,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { isNull } from "./utils/lib.ts";
+import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
 
 function App() {
   function saveHistory(newHistory: WishHistory) {
@@ -61,7 +62,15 @@ function App() {
               Export <FileDownloadIcon />
             </button>
             <ImagePicker setImages={setImages} images={images} />
-            <Scanner images={images} setImages={setImages} saveHistory={saveHistory} />
+            <Suspense
+              fallback={
+                <div>
+                  <span>Downloading required components...</span> <ProgressIndicator />
+                </div>
+              }
+            >
+              <Scanner images={images} setImages={setImages} saveHistory={saveHistory} />
+            </Suspense>
 
             <button
               className="btn btn-delete"
