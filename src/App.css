@@ -132,9 +132,9 @@ h3 {
   display: grid;
   grid-template-areas:
     "heading heading"
-    "btn-scan btn-export"
+    "btn-add btn-export"
     ". btn-delete"
-    "btn-add btn-delete";
+    "btn-scan btn-delete";
 
   width: 100%;
   gap: 12px;
@@ -308,6 +308,9 @@ select {
   display: none;
 }
 
+.scanner-fallback {
+}
+
 .table-container {
   margin-top: 20px;
   margin-bottom: 40px;
@@ -446,8 +449,10 @@ dialog {
 }
 
 .progress-label {
-  width: 65px;
-  height: 50px;
+  position:relative;
+  margin: 16px;
+  width: 50px;
+  aspect-ratio: 1;
   border-radius: 100%;
   background-color: #eeebe5;
   display: flex;

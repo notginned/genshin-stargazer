@@ -64,7 +64,7 @@ function App() {
             <ImagePicker setImages={setImages} images={images} />
             <Suspense
               fallback={
-                <div>
+                <div className="scanner-fallback">
                   <span>Downloading required components...</span> <ProgressIndicator />
                 </div>
               }
