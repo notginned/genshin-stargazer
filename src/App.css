@@ -138,7 +138,6 @@ h1:has(.heading-container) {
   display: grid;
   grid-template-areas:
     "btn-add btn-delete"
-    ". btn-delete"
     "btn-scan btn-export";
 
   width: 100%;
@@ -205,6 +204,7 @@ h1:has(.heading-container) {
 .btn-export {
   grid-area: btn-export;
   justify-self: end;
+  align-self: end;
 }
 
 .wish-type-container {
@@ -446,10 +446,26 @@ dialog {
   visibility: initial
 }
 
+.scanner-fallback {
+  grid-area: btn-scan;
+  display: flex;
+  gap: 8px;
+  
+  & span {
+    width: min-content;
+  }
+}
+
+.progress-wrapper {
+  align-self: center;
+}
+
 .progress-label {
   position: relative;
-  margin: 16px;
-  width: 50px;
+  margin-top: 8px;
+  /* Half of width */
+  margin-left: 1.75rem;
+  width: min-content;
   aspect-ratio: 1;
   border-radius: 100%;
   background-color: #eeebe5;
@@ -469,7 +485,7 @@ dialog {
 .progress-icon {
   position: absolute;
   aspect-ratio: 1;
-  width: 4rem;
+  width: 3.5rem;
   /* background: linear-gradient(#ddc794 30%, transparent 30%); */
   background: transparent;
   box-shadow: inset 8px 12px 0px 0px #ddc794;

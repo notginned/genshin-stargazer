@@ -77,7 +77,8 @@ function App() {
               className="btn btn-delete"
               onClick={() => clearHistoryDialogRef.current?.showModal()}
             >
-              Delete data<DeleteIcon />
+              Delete data
+              <DeleteIcon />
             </button>
           </div>
           <div className="wish-type-container">
