@@ -12,6 +12,8 @@ import {
 async function preprocessImage(input: HTMLImageElement) {
   try {
     const output = document.createElement("canvas");
+    // Copy image hash to our processed canvas
+    output.id = input.id;
     const cv = await getOpenCv();
     const src = cv.imread(input);
     const dst = new cv.Mat();

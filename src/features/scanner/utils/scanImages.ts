@@ -3,18 +3,6 @@ import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { PaddleOcrService } from "ppu-paddle-ocr/web";
 
-/* const myOcr = PaddleOCR.create({
-  lang: "en",
-  ocrVersion: "PP-OCRv5",
-  worker: true,
-  ortOptions: {
-    backend: "auto",
-    wasmPaths: "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/",
-    numThreads: 4,
-    simd: true,
-  },
-}); */
-
 const service = new PaddleOcrService({
   debugging: {
     debug: false,
@@ -25,34 +13,6 @@ const service = new PaddleOcrService({
     executionProviders: ["wasm", "cuda"],
   },
 });
-
-/* async function scanSingleRegion(region: ScanRegions, scheduler: Scheduler) {
-  try {
-    return Promise.all(
-      region.rectangles
-        .map((rectangle) =>
-          scheduler.scheduler.addJob(
-            "recognize",
-            region.image,
-            { rectangle },
-            { blocks: true, text: false },
-          ),
-        )
-        .concat(
-          scheduler.pageWorker.recognize(
-            region.image,
-            { rectangle: region.pageRectangle },
-            { blocks: true, text: false },
-          ),
-        ),
-    );
-  } catch (error) {
-    const srcImage = document.querySelector<HTMLImageElement>("#" + region.image.id.substring(7));
-    if (!srcImage) throw new Error("No image found to scan", { cause: error });
-
-    throw new ImageError("There was an error scanning the image", srcImage);
-  }
-} */
 
 const cropRegion = (img: HTMLCanvasElement, rectangle: Rectangle) => {
   const canvas = document.createElement("canvas");

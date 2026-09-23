@@ -95,6 +95,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
 
         if (isNull(inputEl)) throw new Error("Can't find image to process");
 
+        console.log("hash", hash);
         const newScanRegion = await getScanRegion(inputEl);
 
         setProcessedImages((prevHashes) => ({
@@ -149,6 +150,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         ...oldImages,
         // Reducing our array of newly scanned images into a object of hashes
         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
+          console.log("reducer", cur);
           acc[cur.image.id] = true;
           return acc;
         }, {}),
