@@ -53,7 +53,7 @@ const scanSingleImage = async (region: ScanRegions) => {
   res.wishType = rps[1].text;
   res.timeReceived = rps[2].text;
   res.pageNumber = rps[3].text;
-  
+
   logDebug("res", res);
 
   return res;
@@ -69,5 +69,14 @@ export async function scanImages(
       return scanSingleImage(region);
     }),
   );
-  return res;
+  const filtered = Object.values(
+    res.reduce<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
+      acc[cur.pageNumber] = cur;
+      return acc;
+    }, {}),
+  );
+
+  console.error(filtered);
+
+  return filtered;
 }

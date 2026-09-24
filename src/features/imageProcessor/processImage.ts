@@ -23,7 +23,7 @@ async function preprocessImage(input: HTMLImageElement) {
     const dst = new cv.Mat();
 
     // Resizing while maintaining aspect ratio for faster OCR
-    if (input.width > 1920)
+    if (input.width !== 1920) {
       cv.resize(
         src,
         src,
@@ -32,6 +32,7 @@ async function preprocessImage(input: HTMLImageElement) {
         0,
         cv.INTER_AREA,
       );
+    }
 
     // Grayscaling
     cv.cvtColor(src, dst, cv.COLOR_BGR2GRAY);
