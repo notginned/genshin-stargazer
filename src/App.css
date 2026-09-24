@@ -137,7 +137,7 @@ h1:has(.heading-container) {
 .toolbar {
   display: grid;
   grid-template-areas:
-    "btn-add btn-delete"
+    "picker btn-delete"
     "btn-scan btn-export";
 
   width: 100%;
@@ -185,8 +185,10 @@ h1:has(.heading-container) {
   }
 }
 
-.btn-add {
-  grid-area: btn-add;
+.file-picker {
+  grid-area: picker;
+  display: flex;
+  gap: 12px;
 }
 
 .btn-scan {

@@ -10,13 +10,14 @@ import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type { Images } from "./types/State.type.ts";
+import type { Images, Videos } from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { isNull } from "./utils/lib.ts";
 import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
+import { VideoPicker } from "./components/VideoPicker.tsx";
 
 function App() {
   function saveHistory(newHistory: WishHistory) {
@@ -32,6 +33,7 @@ function App() {
   const [history, setHistory] = useLocalStorage<WishHistory>("history", createEmptyWishHistory());
 
   const [images, setImages] = useState<Images>({});
+  const [videos, setVideos] = useState<Videos>({});
 
   const [activeTab, setActiveTab] = useState("character_event_wish");
 
@@ -62,7 +64,10 @@ function App() {
             <button className="btn btn-export" onClick={() => generateSheet(tablesRef.current)}>
               Export <FileDownloadIcon />
             </button>
-            <ImagePicker setImages={setImages} images={images} />
+            <div className="file-picker">
+              <ImagePicker setImages={setImages} images={images} />
+              <VideoPicker setImages={setImages} images={images} setVideo={setVideos} video={videos} />
+            </div>
             <Suspense
               fallback={
                 <div className="scanner-fallback">

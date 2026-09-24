@@ -15,6 +15,7 @@
     "@mui/icons-material": "^7.3.2",
     "@techstark/opencv-js": "^4.11.0-release.1",
     "onnxruntime-web": "^1.30.0",
+    "pixelmatch": "^7.2.0",
     "ppu-paddle-ocr": "^6.6.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
