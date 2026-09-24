@@ -1,42 +1,44 @@
 import { BKTree } from "../../utils/BKTree.ts";
 import type { ScanResult } from "../scanner/utils/scan.types.ts";
 import type { Wish } from "../../types/Wish.types.ts";
-import { itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
+import { headersDict, itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
 import { log, logDebug } from "../../utils/lib.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;
 
-function correctName(name: string, tree: BKTree): [string, number] {
+function correctName(name: string, tree: BKTree, tolerance: number): [string, number] {
   const [result, distance] = tree
     // More tolerant towards longer strings
-    .search(name, Math.ceil(name.length / 5))
+    .search(name, Math.ceil(name.length / tolerance))
     .sort(([, d1], [, d2]) => d1 - d2)[0] || [name, Infinity];
 
   return [result, distance];
 }
 
-function prepareColumn(data: string): string[] {
-  const [, ...items ] = data.split('\n');
+function prepareColumn(data: string, header: string, tolerance: number): string[] {
+  const splitted = data.split('\n');
+  // Excluding the searched header
+  const items = splitted.slice(1 + splitted.findIndex(x => header === correctName(x, headersDict, tolerance)[0]));
+  
   return items;
-
 }
 
-function sanitizeSingleItem(name: string, dict: BKTree): [string, number] {
+function sanitizeSingleItem(name: string, dict: BKTree, tolerance: number): [string, number] {
   const cleaned = name?.trim().replace(rarityRegex, "").trim();
 
   if (!cleaned) return [cleaned, Infinity];
 
-  return correctName(cleaned, dict);
+  return correctName(cleaned, dict, tolerance);
 }
 
-function sanitizeItems(items: string[], dict: BKTree) {
+function sanitizeItems(items: string[], dict: BKTree, tolerance = 5) {
   const res = [];
 
   for (let i = 0; i < items.length; ++i) {
-    const [cleaned, distance] = sanitizeSingleItem(items[i], dict);
+    const [cleaned, distance] = sanitizeSingleItem(items[i], dict, tolerance);
 
-    if (distance <= Math.ceil(cleaned.length / 5)) {
+    if (distance <= Math.ceil(cleaned.length / tolerance)) {
       res.push(cleaned);
       continue;
     }
@@ -46,7 +48,8 @@ function sanitizeItems(items: string[], dict: BKTree) {
     // Genshin only has item names upto 2 rows AFAIK
     const [joined, joinedDistance] = sanitizeSingleItem(
       cleaned + " " + items[i + 1]?.trim(),
-      dict
+      dict,
+      tolerance
     );
 
     if (joinedDistance <= 2) {
@@ -77,18 +80,22 @@ function parseDate(timestamp: number) {
 function parseScanResults(data: ScanResult): Wish[] {
   const pageNumber = Number(data.pageNumber[0]?.trim());
 
-  const itemNamesCol = prepareColumn(data.itemName);
+  const itemNamesCol = prepareColumn(data.itemName, "Item Name", 5);
   const itemNames = sanitizeItems(itemNamesCol, itemNamesDict);
 
-  const wishTypesCol = prepareColumn(data.wishType);
-  const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict);
+  const wishTypesCol = prepareColumn(data.wishType, "Wish Type", 5);
+  const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict, 3);
 
   // First 10 characters are YY-MM-DD
   // Rest are hh:mm:ss
-  const timeReceived = prepareColumn(data.timeReceived).map(
+  const timeReceived = prepareColumn(data.timeReceived, "Time Received", 5).map(
     (time) =>
       new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf()
   );
+
+  log("cols", {itemNamesCol, wishTypesCol, timeReceived})
+  log("sanitized", {itemNames, wishTypes, timeReceived})
+
 
   const wishes = itemNames.map<Wish>((itemName, i) => {
     return {
@@ -101,7 +108,6 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
-  log("data", data);
   logDebug("wish", wishes);
   return wishes;
 }

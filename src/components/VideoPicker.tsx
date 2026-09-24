@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -18,7 +17,7 @@ interface VideoPickerProps {
   setImages: Dispatch<SetStateAction<Images>>;
 }
 
-const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement, frames: string[]) => {
+const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement, frames: Videos) => {
   const ctx = canvas.getContext("2d");
   if (ctx === null) throw new Error("Couldnt get context");
   canvas.width = video.videoWidth;
@@ -29,11 +28,13 @@ const drawFrame = (video: HTMLVideoElement, canvas: HTMLCanvasElement, frames: s
   const updateCanvas: VideoFrameRequestCallback = (now, metadata) => {
     const currentTime = video.currentTime;
 
-    if (currentTime === 0 || currentTime - dt > 1 / FPS) {
+    if (currentTime - dt > 1 / FPS) {
       console.log(currentTime);
       dt = currentTime;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      frames.push(canvas.toDataURL("image/png"));
+      const hash = "v" + hashCode(video.title + currentTime);
+
+      frames[hash] = canvas.toDataURL("image/png");
     }
     video.requestVideoFrameCallback(updateCanvas);
   };
@@ -45,7 +46,7 @@ function VideoPicker({ video, setVideo, images, setImages }: VideoPickerProps) {
   const [src, setSrc] = useState<string | null>(null);
   const vRef = useRef<HTMLVideoElement | null>(null);
   const cRef = useRef<HTMLCanvasElement | null>(null);
-  const frames: string[] = [];
+  const frames: Videos = {};
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
@@ -61,6 +62,11 @@ function VideoPicker({ video, setVideo, images, setImages }: VideoPickerProps) {
     });
   }
 
+  const handleOnPause = () => {
+    setImages((images) => ({ ...images, ...frames }));
+    console.log(frames);
+  };
+
   return (
     <>
       <label className="btn btn-add">
@@ -71,7 +77,7 @@ function VideoPicker({ video, setVideo, images, setImages }: VideoPickerProps) {
         <video
           ref={vRef}
           onLoadedMetadata={() => drawFrame(vRef.current!, cRef.current!, frames)}
-          onPause={() => console.log(frames)}
+          onPause={handleOnPause}
           playsInline
           muted
           autoPlay

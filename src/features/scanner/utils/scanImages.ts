@@ -53,6 +53,8 @@ const scanSingleImage = async (region: ScanRegions) => {
   res.wishType = rps[1].text;
   res.timeReceived = rps[2].text;
   res.pageNumber = rps[3].text;
+  
+  logDebug("res", res);
 
   return res;
 };
