@@ -11,6 +11,7 @@ import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
 import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
+import type { Rectangle } from "../utils/scan.types.ts";
 
 let scannerLoaded: null | Promise<void> = null;
 
@@ -18,6 +19,41 @@ const loadScanner = async () => {
   await service.initialize();
   return service.destroy();
 };
+
+const colors = [
+  "#FF5733", // Bright Red-Orange
+  "#FFBD33", // Bright Yellow-Orange
+  "#DBFF33", // Bright Lime
+  "#75FF33", // Neon Green
+  "#33FF57", // Bright Green
+  "#33FFBD", // Bright Aqua
+  "#33DBFF", // Bright Sky Blue
+  "#3375FF", // Bright Blue
+  "#5733FF", // Bright Indigo
+  "#BD33FF", // Bright Violet
+  "#FF33DB", // Bright Pink-Magenta
+  "#FF3375", // Bright Hot Pink
+];
+
+function genRandomColor() {
+  const color = colors[Math.round(Math.random() * (colors.length - 1))];
+  return color;
+}
+
+function drawBoxes(
+  canvasEl: HTMLCanvasElement,
+  rectangles: Rectangle[]
+) {
+  const ctx = canvasEl.getContext("2d");
+  if (!ctx) return;
+
+  rectangles.forEach(({ top, left, height, width }) => {
+    const newCol = genRandomColor();
+    ctx.strokeStyle = newCol;
+    ctx.rect(left, top, width, height);
+    ctx.stroke();
+  });
+}
 
 interface ScannerProps {
   images: Images;
@@ -111,6 +147,8 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
         if (isNull(inputEl)) throw new Error("Can't find image to process");
 
         const newScanRegion = await getScanRegion(inputEl);
+        drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
+        document.querySelector('header')?.appendChild(newScanRegion.image);
 
         setProcessedImages((prevHashes) => ({
           ...prevHashes,

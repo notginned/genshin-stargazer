@@ -29,7 +29,7 @@ const PAGE_COUNT_BBOX: bbox = {
   TOP_RATIO: 0.87,
   LEFT_RATIO: 0.47,
   WIDTH_RATIO: 0.082,
-  HEIGHT_RATIO: 0.082,
+  HEIGHT_RATIO: 0.084,
 };
 
 export {
