@@ -8,6 +8,16 @@ import {
 } from "../scanner/utils/config/bboxes.ts";
 import { log } from "../../utils/lib.ts";
 import { ImageError } from "../../utils/ImageError.ts";
+import pixelmatch from "pixelmatch";
+import { getDiff } from "../FilePicker/utils/getDiff.ts";
+import base from "../../../data/diff.png"
+
+const baseImg = new Image();
+baseImg.src = base;
+const diffBase = document.createElement('canvas');
+diffBase.width = baseImg.naturalWidth;
+diffBase.height = baseImg.naturalHeight;
+diffBase.getContext("2d")?.drawImage(baseImg, 0, 0, diffBase.width, diffBase.height);
 
 async function preprocessImage(input: HTMLImageElement) {
   try {
@@ -38,7 +48,7 @@ async function preprocessImage(input: HTMLImageElement) {
     cv.cvtColor(src, dst, cv.COLOR_BGR2GRAY);
 
     // Thresholding
-    cv.threshold(dst, dst, 175, 255, cv.THRESH_BINARY);
+    cv.threshold(dst, dst, 178, 255, cv.THRESH_BINARY);
     cv.bitwise_not(dst, dst);
 
     // Hough Line Transform
@@ -64,6 +74,12 @@ async function preprocessImage(input: HTMLImageElement) {
       maxX = Math.max(maxX, lines.data32S[i * 4 + 2]);
       maxY = Math.max(maxY, lines.data32S[i * 4 + 3]);
     }
+    // Blurring
+    const ksize = new cv.Size(2, 2);
+    const anchor = new cv.Point(-1, -1);
+    // You can try more different parameters
+    // cv.blur(dst, dst, ksize, anchor, cv.BORDER_DEFAULT);
+    cv.boxFilter(dst, dst, -1, ksize, anchor, true, cv.BORDER_DEFAULT)
 
     const height = maxY - minY;
     const width = maxX - minX;

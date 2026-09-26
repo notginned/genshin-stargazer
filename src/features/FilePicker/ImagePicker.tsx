@@ -1,7 +1,7 @@
 import { type ChangeEvent, type Dispatch, type SetStateAction } from "react";
-import { hashCode } from "../utils/hash.ts";
-import type { Images } from "../types/State.type.ts";
 import InsertPhotoIcon from '@mui/icons-material/InsertPhoto';
+import type { Images } from "../../types/State.type";
+import { hashCode } from "../../utils/hash";
 
 interface FolderPickerProps {
   images: Images;

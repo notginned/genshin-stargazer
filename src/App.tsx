@@ -4,7 +4,7 @@ import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
 import { mergeHistories } from "./features/dataParser/historyReducer.ts";
 import type { WishHistory } from "./types/Wish.types.ts";
 import { createEmptyWishHistory } from "./utils/createEmptyWishHistory.ts";
-import { ImagePicker } from "./components/ImagePicker.tsx";
+import { ImagePicker } from "./features/FilePicker/ImagePicker.tsx";
 import { generateSheet } from "./features/wishTable/utils/generateSheet.ts";
 import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
@@ -17,7 +17,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { isNull } from "./utils/lib.ts";
 import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
-import { VideoPicker } from "./components/VideoPicker.tsx";
+import { VideoPicker } from "./features/FilePicker/VideoPicker.tsx";
 
 function App() {
   function saveHistory(newHistory: WishHistory) {
@@ -30,7 +30,10 @@ function App() {
     clearHistoryDialogRef.current.close();
     window.location.reload();
   }
-  const [history, setHistory] = useLocalStorage<WishHistory>("history", createEmptyWishHistory());
+  const [history, setHistory] = useLocalStorage<WishHistory>(
+    "history",
+    createEmptyWishHistory(),
+  );
 
   const [images, setImages] = useState<Images>({});
   const [videos, setVideos] = useState<Videos>({});
@@ -61,21 +64,35 @@ function App() {
           </h1>
 
           <div className="toolbar">
-            <button className="btn btn-export" onClick={() => generateSheet(tablesRef.current)}>
+            <button
+              className="btn btn-export"
+              onClick={() => generateSheet(tablesRef.current)}
+            >
               Export <FileDownloadIcon />
             </button>
-            <div className="file-picker">
-              <ImagePicker setImages={setImages} images={images} />
-              <VideoPicker setImages={setImages} images={images} setVideo={setVideos} video={videos} />
-            </div>
+
             <Suspense
               fallback={
                 <div className="scanner-fallback">
-                  <span>Downloading required components...</span> <ProgressIndicator />
+                  <span>Downloading required components...</span>{" "}
+                  <ProgressIndicator />
                 </div>
               }
             >
-              <Scanner images={images} setImages={setImages} saveHistory={saveHistory} />
+              <div className="file-picker">
+                <ImagePicker setImages={setImages} images={images} />
+                <VideoPicker
+                  setImages={setImages}
+                  images={images}
+                  setVideo={setVideos}
+                  video={videos}
+                />
+              </div>
+              <Scanner
+                images={images}
+                setImages={setImages}
+                saveHistory={saveHistory}
+              />
             </Suspense>
 
             <button
@@ -88,7 +105,10 @@ function App() {
           </div>
           <div className="wish-type-container">
             <h3>Wish Type</h3>
-            <select name="events" onChange={(e) => setActiveTab(e.target.value)}>
+            <select
+              name="events"
+              onChange={(e) => setActiveTab(e.target.value)}
+            >
               {Object.keys(history).map((event) => (
                 <option key={event} value={event}>
                   {event.split("_").join(" ")} ({history[event].length})
@@ -115,10 +135,17 @@ function App() {
           />
         ))}
       </main>
-      <Modal title="Delete data" className="delete-modal" ref={clearHistoryDialogRef}>
+      <Modal
+        title="Delete data"
+        className="delete-modal"
+        ref={clearHistoryDialogRef}
+      >
         Do you want to delete your history?
         <div className="modal-actions">
-          <button className="btn" onClick={() => clearHistoryDialogRef.current?.close()}>
+          <button
+            className="btn"
+            onClick={() => clearHistoryDialogRef.current?.close()}
+          >
             No
           </button>
           <button className="btn btn-delete" onClick={handleClearHistory}>
