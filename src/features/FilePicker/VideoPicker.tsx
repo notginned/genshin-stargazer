@@ -4,6 +4,7 @@ import {
   type ChangeEvent,
   type Dispatch,
   type SetStateAction,
+  type SubmitEventHandler,
 } from "react";
 import { hashCode } from "../../utils/hash.ts";
 import type { Images, Videos } from "../../types/State.type.ts";
@@ -22,9 +23,10 @@ function VideoPicker({ images, setImages }: VideoPickerProps) {
   // TODO: Implement discarding dupes
   // set images from frames
   const cRef = useRef<HTMLCanvasElement | null>(null);
-  const [screens, setScreens] = useState<HTMLCanvasElement[]>([]);
+  const [screens, setScreens] = useState<Images>({});
   const pRef = useRef<HTMLProgressElement | null>(null);
   const mRef = useRef<HTMLDialogElement | null>(null);
+  const fRef = useRef<HTMLFormElement | null>(null);
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
@@ -65,6 +67,24 @@ function VideoPicker({ images, setImages }: VideoPickerProps) {
     });
   }
 
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
+    if (fRef.current === null) return;
+
+    const results = [...new FormData(e.currentTarget).entries()].reduce<Images>(
+      (acc, [, hash]) => {
+        acc[hash as string] = screens[hash as string];
+        return acc;
+      },
+      {},
+    );
+
+    mRef.current?.close();
+
+    setImages((ims) => ({ ...ims, ...results }));
+    // log(results);
+  };
+
   return (
     <>
       <label className="btn btn-add">
@@ -73,17 +93,27 @@ function VideoPicker({ images, setImages }: VideoPickerProps) {
       </label>
       <progress max="1" ref={pRef}></progress>
       <canvas ref={cRef}></canvas>
-      <Modal ref={mRef} title="Video Upload results">
-        <div className="video-result-frames">
-          {screens.map((x) => (
-            <img
-              key={x.dataset.hash}
-              width="320px"
-              data-hash={x.dataset.hash}
-              src={x.toDataURL("image/png")}
-            />
-          ))}
-        </div>
+      <Modal
+        className="video-result-modal"
+        ref={mRef}
+        title="Video Upload results"
+      >
+        <form ref={fRef} name="video-frames" onSubmit={handleSubmit}>
+          <div className="video-result-frames">
+            {Object.entries(screens).map(([hash, url]) => (
+              <label key={hash}>
+                <img data-hash={hash} src={url} />
+                <input
+                  type="checkbox"
+                  name="frame"
+                  value={hash}
+                  defaultChecked
+                />
+              </label>
+            ))}
+          </div>
+          <button type="submit">Okay</button>
+        </form>
       </Modal>
     </>
   );

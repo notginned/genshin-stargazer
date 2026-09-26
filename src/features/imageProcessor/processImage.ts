@@ -8,16 +8,6 @@ import {
 } from "../scanner/utils/config/bboxes.ts";
 import { log } from "../../utils/lib.ts";
 import { ImageError } from "../../utils/ImageError.ts";
-import pixelmatch from "pixelmatch";
-import { getDiff } from "../FilePicker/utils/getDiff.ts";
-import base from "../../../data/diff.png"
-
-const baseImg = new Image();
-baseImg.src = base;
-const diffBase = document.createElement('canvas');
-diffBase.width = baseImg.naturalWidth;
-diffBase.height = baseImg.naturalHeight;
-diffBase.getContext("2d")?.drawImage(baseImg, 0, 0, diffBase.width, diffBase.height);
 
 async function preprocessImage(input: HTMLImageElement) {
   try {
@@ -33,14 +23,16 @@ async function preprocessImage(input: HTMLImageElement) {
     const dst = new cv.Mat();
 
     // Resizing while maintaining aspect ratio for faster OCR
+    const newWidth = 1920;
+    const newHeight = 1920 * input.naturalHeight / input.naturalWidth;
     if (input.width !== 1920) {
       cv.resize(
         src,
         src,
-        new cv.Size(1920, (1920 * input.height) / input.width),
+        new cv.Size(newWidth, newHeight),
         0,
         0,
-        cv.INTER_AREA,
+        cv.INTER_LINEAR,
       );
     }
 
@@ -75,11 +67,11 @@ async function preprocessImage(input: HTMLImageElement) {
       maxY = Math.max(maxY, lines.data32S[i * 4 + 3]);
     }
     // Blurring
-    const ksize = new cv.Size(2, 2);
-    const anchor = new cv.Point(-1, -1);
+    // const ksize = new cv.Size(2, 2);
+    // const anchor = new cv.Point(-1, -1);
     // You can try more different parameters
     // cv.blur(dst, dst, ksize, anchor, cv.BORDER_DEFAULT);
-    cv.boxFilter(dst, dst, -1, ksize, anchor, true, cv.BORDER_DEFAULT)
+    // cv.boxFilter(dst, dst, -1, ksize, anchor, true, cv.BORDER_DEFAULT)
 
     const height = maxY - minY;
     const width = maxX - minX;

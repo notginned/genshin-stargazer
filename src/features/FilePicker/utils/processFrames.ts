@@ -1,3 +1,4 @@
+import { type Images } from "../../../types/State.type";
 import { hashCode } from "../../../utils/hash";
 import { log } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
@@ -10,29 +11,32 @@ const drawFrame = (
 ) => {
   let dt = 0;
   const FPS = 1;
-  mainCanvas.width = video.videoWidth;
-  mainCanvas.height = video.videoHeight;
+  const width = video.videoWidth;
+  const height = video.videoHeight;
+  mainCanvas.width = width;
+  mainCanvas.height = height;
   const mainCtx = mainCanvas.getContext("2d");
   if (mainCtx === null) throw new Error("Couldnt get context");
+  console.log({ width, height });
 
   const updateCanvas: VideoFrameRequestCallback = (_now, _metadata) => {
     const currentTime = video.currentTime;
 
     if (currentTime - dt > 1 / FPS) {
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (ctx === null) throw new Error("Couldnt get context");
 
       log(currentTime);
       dt = currentTime;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      mainCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, width, height);
+      mainCtx.drawImage(video, 0, 0, width, height);
       const hash = "v" + hashCode(video.title + currentTime);
       canvas.dataset.hash = hash;
 
-      if(callback) callback(currentTime / video.duration);
+      if (callback) callback(currentTime / video.duration);
 
       frames.push(canvas);
     }
@@ -75,7 +79,12 @@ const dedupFrames = async (
     res.push(frames[L]);
   }
 
-  return res;
+  return res.reduce<Images>((acc, cur) => {
+    if (cur.dataset.hash) {
+      acc[cur.dataset.hash] = cur.toDataURL("image/png");
+    }
+    return acc;
+  }, {});
 };
 
 export { drawFrame, dedupFrames };

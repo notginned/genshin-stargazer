@@ -36,7 +36,6 @@ function App() {
   );
 
   const [images, setImages] = useState<Images>({});
-  const [videos, setVideos] = useState<Videos>({});
 
   const [activeTab, setActiveTab] = useState("character_event_wish");
 
@@ -84,8 +83,6 @@ function App() {
                 <VideoPicker
                   setImages={setImages}
                   images={images}
-                  setVideo={setVideos}
-                  video={videos}
                 />
               </div>
               <Scanner

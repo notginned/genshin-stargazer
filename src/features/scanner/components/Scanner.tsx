@@ -13,12 +13,13 @@ import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import type { Rectangle } from "../utils/scan.types.ts";
 
-let scannerLoaded: null | Promise<void> = null;
+// let scannerLoaded: null | Promise<void> = null;
 
-const loadScanner = async () => {
-  await service.initialize();
-  return service.destroy();
-};
+// const loadScanner = async () => {
+  // await service.initialize();
+  // return service.destroy();
+  // return true;
+// };
 
 const colors = [
   "#FF5733", // Bright Red-Orange
@@ -62,11 +63,11 @@ interface ScannerProps {
 }
 
 function Scanner({ images, setImages, saveHistory }: ScannerProps) {
-  if (!scannerLoaded) {
-    scannerLoaded = loadScanner();
-  }
-
-  use(scannerLoaded);
+//   if (!scannerLoaded) {
+//     scannerLoaded = loadScanner();
+//   }
+//
+//   use(scannerLoaded);
 
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
