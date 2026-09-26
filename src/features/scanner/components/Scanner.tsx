@@ -1,24 +1,39 @@
-import { use, useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  use,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { scanImages, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { getScanRegion } from "../../imageProcessor/processImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
-import type { Images, ProcessedImages, ScannedImages } from "../../../types/State.type.ts";
+import type {
+  Images,
+  ProcessedImages,
+  ScannedImages,
+} from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
-import { isNull, logDebug } from "../../../utils/lib.ts";
+import { isNull, log, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import type { Rectangle } from "../utils/scan.types.ts";
+import { isEmpty } from "../../../utils/isEmpty.ts";
+import { createImageFromUrl } from "../../../utils/imageFromUrl.ts";
+import { getOpenCv } from "../../imageProcessor/lib/opencv/opencv.ts";
 
 // let scannerLoaded: null | Promise<void> = null;
 
 // const loadScanner = async () => {
-  // await service.initialize();
-  // return service.destroy();
-  // return true;
+// await service.initialize();
+// return service.destroy();
+// return true;
 // };
 
 const colors = [
@@ -41,10 +56,7 @@ function genRandomColor() {
   return color;
 }
 
-function drawBoxes(
-  canvasEl: HTMLCanvasElement,
-  rectangles: Rectangle[]
-) {
+function drawBoxes(canvasEl: HTMLCanvasElement, rectangles: Rectangle[]) {
   const ctx = canvasEl.getContext("2d");
   if (!ctx) return;
 
@@ -59,51 +71,57 @@ function drawBoxes(
 interface ScannerProps {
   images: Images;
   setImages: Dispatch<SetStateAction<Images>>;
+  processedImages: ProcessedImages;
+  setProcessedImages: Dispatch<SetStateAction<ProcessedImages>>;
   saveHistory: (newHistory: WishHistory) => void;
 }
 
-function Scanner({ images, setImages, saveHistory }: ScannerProps) {
-//   if (!scannerLoaded) {
-//     scannerLoaded = loadScanner();
-//   }
-//
-//   use(scannerLoaded);
+function Scanner({
+  images,
+  setImages,
+  processedImages,
+  setProcessedImages,
+  saveHistory,
+}: ScannerProps) {
+  //   if (!scannerLoaded) {
+  //     scannerLoaded = loadScanner();
+  //   }
+  //
+  //   use(scannerLoaded);
 
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
   const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
-  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>("scannedImages", {});
-
-  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
-
-  // There was an error processing the image
-  if (error) {
-    console.error(error);
-    errorModalRef.current?.showModal();
-  }
+  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
+    "scannedImages",
+    {},
+  );
 
   // Happy path
   const scanQueue = Object.values(processedImages).filter(
     (region) => !scannedImages[region.image.dataset.hash!],
   );
-  logDebug("scanQueue", scanQueue);
-  logDebug("processedImages", processedImages);
+  // logDebug("scanQueue", scanQueue);
+  // logDebug("processedImages", processedImages);
   logDebug("scannedImages", scannedImages);
 
-  const [scanResultTable, setScanResultTable] = useState<Nullable<WishHistory>>(null);
+  const [scanResultTable, setScanResultTable] =
+    useState<Nullable<WishHistory>>(null);
   const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
 
-  if (scanResultTable) {
-    resultsModalRef.current?.showModal();
-  }
+  const allImagesProcessed = isEmpty(images);
+  console.log({allImagesProcessed});
 
-  const allImagesProcessed = Object.keys(images).every((hash) => processedImages[hash]);
-
-  const allImagesScanned = scanQueue.length === 0;
+  const allImagesScanned = isEmpty(processedImages);
 
   if (allImagesProcessed) {
     logDebug("Processed all images");
   }
+
+  const clearScanQueue = useCallback(() => {
+    setIsScanning(false);
+    setImages({});
+  }, [setImages]);
 
   const handleErrorModalClose = useCallback(() => {
     if (!error) return;
@@ -120,57 +138,51 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     });
     clearScanQueue();
     setError(() => null);
-  }, [setImages, scanQueue, setProcessedImages, error]);
-
-  const clearScanQueue = useCallback(() => {
-    setIsScanning(false);
-    setImages({});
-  }, [setImages]);
+  }, [clearScanQueue, setProcessedImages, error]);
 
   // Image Processing
-  const handleLoad = useCallback(
-    async (hash: string) => {
-      try {
-        if (processedImages[hash]) {
-          logDebug("Already processed");
+  const startProcessing = async () => {
+    try {
+      console.log(isScanning)
+      const result: ProcessedImages = {};
+      const entries = Object.entries(images);
+      logDebug({ entries });
+      logDebug(processedImages);
+      for (const [hash, src] of entries) {
+        log(hash);
+        // if (processedImages[hash]) {
+        //   logDebug("Already processed this image", hash);
+        //   continue;
+        // }
 
-          setImages((prevImages) => {
-            const res = { ...prevImages };
-            delete res[hash];
-            return res;
-          });
+        const newScanRegion = await getScanRegion(src, hash);
+        // drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
+        // document.querySelector("header")?.appendChild(newScanRegion.image);
 
-          return;
-        }
-
-        const inputEl = document.querySelector<HTMLImageElement>(`img[data-hash=${hash}]`);
-
-        if (isNull(inputEl)) throw new Error("Can't find image to process");
-
-        const newScanRegion = await getScanRegion(inputEl);
-        drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
-        document.querySelector('header')?.appendChild(newScanRegion.image);
-
-        setProcessedImages((prevHashes) => ({
-          ...prevHashes,
-          [hash]: newScanRegion,
-        }));
-      } catch (e) {
-        if (e instanceof ImageError) {
-          setError(e);
-        }
+        result[hash] = newScanRegion;
       }
-    },
-    [setImages, processedImages, setProcessedImages],
-  );
+      log({ result });
+
+      setProcessedImages((prevHashes) => ({
+        ...prevHashes,
+        ...result,
+      }));
+      setImages({});
+    } catch (e) {
+      if (e instanceof ImageError) {
+        setError(e);
+      }
+      console.error(e);
+    }
+  };
 
   // Function to handle scanning
-  const handleClick = useCallback(async () => {
+  const startScan = useCallback(async () => {
     if (isScanning) {
       logDebug("Already scanning");
       return;
     }
-    logDebug("clicked", { scanQueue });
+    // logDebug("clicked", { scanQueue });
 
     // No new images
     if (scanQueue.length === 0) {
@@ -183,14 +195,14 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     setIsScanning(true);
     try {
       const scanResults = await scanImages(scanQueue);
-      logDebug("scan results", scanResults);
+      // logDebug("scan results", scanResults);
 
       if (scanResults.some((r) => r.itemName.length === 0)) {
         throw new Error("Could not scan image");
       }
 
       const newHistory = processHistory(scanResults);
-      logDebug("newHistory", newHistory);
+      // logDebug("newHistory", newHistory);
 
       // Saving history to browser storage
       saveHistory(newHistory);
@@ -208,9 +220,10 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
           return acc;
         }, {}),
       }));
+
+      if (resultsModalRef.current) resultsModalRef.current.show();
     } catch (error) {
       console.error("Error scanning images", error);
-
       if (!(error instanceof Error)) return;
       setError(error);
     } finally {
@@ -220,18 +233,29 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
     }
   }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
 
+  const handleClick = async () => {
+    await startProcessing();
+    // await startScan();
+  }
+
   return (
     <>
-      {!allImagesProcessed && <ProgressIndicator />}
+      {/*{!allImagesProcessed && <ProgressIndicator />}
 
       {allImagesProcessed && !isScanning && !allImagesScanned && (
         <button type="button" className="btn btn-scan" onClick={handleClick}>
           Scan ({scanQueue.length})
         </button>
       )}
-      {isScanning && <ProgressIndicator />}
+      {isScanning && <ProgressIndicator />}*/}
 
-      <section className="images">
+      {!isEmpty(images) && (
+        <button type="button" className="btn btn-scan" onClick={handleClick}>
+          Process Images ()
+        </button>
+      )}
+
+      {/*<section className="images">
         {Object.entries(images).map(([hash, src]) => (
           <img
             key={hash}
@@ -242,31 +266,42 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
             onLoad={() => handleLoad(hash)}
           ></img>
         ))}
-      </section>
+      </section>*/}
 
       <Modal
         title="Error"
         className="error-modal"
         ref={errorModalRef}
         onClose={handleErrorModalClose}
+        open={error ? true : false}
       >
         <p>There was an error processing the image</p>
         {!isNull(error) && <p>{error.message}</p>}
         <p>Please retry</p>
         {error instanceof ImageError && (
-          <img src={error?.image.src} alt="error-image" className="error-image" />
+          <img
+            src={error?.image.src}
+            alt="error-image"
+            className="error-image"
+          />
         )}
         <div className="error-modal-btn-wrapper">
           <button
             className="btn"
             onClick={async () =>
-              error && navigator.clipboard.writeText(error.message + "\n\n" + error?.stack)
+              error &&
+              navigator.clipboard.writeText(
+                error.message + "\n\n" + error?.stack,
+              )
             }
           >
             Copy error
           </button>
 
-          <button className="btn" onClick={() => errorModalRef.current?.close()}>
+          <button
+            className="btn"
+            onClick={() => errorModalRef.current?.close()}
+          >
             Okay
           </button>
         </div>

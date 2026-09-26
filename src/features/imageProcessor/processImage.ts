@@ -8,6 +8,7 @@ import {
 } from "../scanner/utils/config/bboxes.ts";
 import { log } from "../../utils/lib.ts";
 import { ImageError } from "../../utils/ImageError.ts";
+import { createImageFromUrl } from "../../utils/imageFromUrl.ts";
 
 async function preprocessImage(input: HTMLImageElement) {
   try {
@@ -129,8 +130,9 @@ function calcRegions(image: HTMLCanvasElement, offset: Rectangle): ScanRegions {
   } satisfies ScanRegions;
 }
 
-async function getScanRegion(inputEl: HTMLImageElement): Promise<ScanRegions> {
-  const output = await preprocessImage(inputEl);
+async function getScanRegion(src: string, hash: string): Promise<ScanRegions> {
+  const image = createImageFromUrl(src, hash);
+  const output = await preprocessImage(image);
 
   if (!output) throw new Error("No offset found. Couldn't process image");
   log("processing", output);
@@ -145,7 +147,7 @@ async function getScanRegion(inputEl: HTMLImageElement): Promise<ScanRegions> {
       Object.values(rect).some((value) => Number.isNaN(value) || !Number.isFinite(value)),
     )
   ) {
-    throw new ImageError("Not a valid wish history screenshot", inputEl);
+    throw new ImageError("Not a valid wish history screenshot", image);
   }
 
   return region;

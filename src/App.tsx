@@ -10,7 +10,7 @@ import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type { Images, Videos } from "./types/State.type.ts";
+import type { Images, ProcessedImages, Videos } from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -18,6 +18,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { isNull } from "./utils/lib.ts";
 import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
 import { VideoPicker } from "./features/FilePicker/VideoPicker.tsx";
+import { FilePicker } from "./features/FilePicker/FilePicker.tsx";
 
 function App() {
   function saveHistory(newHistory: WishHistory) {
@@ -36,6 +37,7 @@ function App() {
   );
 
   const [images, setImages] = useState<Images>({});
+  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
 
   const [activeTab, setActiveTab] = useState("character_event_wish");
 
@@ -78,16 +80,12 @@ function App() {
                 </div>
               }
             >
-              <div className="file-picker">
-                <ImagePicker setImages={setImages} images={images} />
-                <VideoPicker
-                  setImages={setImages}
-                  images={images}
-                />
-              </div>
+              <FilePicker images={images} setImages={setImages} />
               <Scanner
                 images={images}
                 setImages={setImages}
+                processedImages={processedImages}
+                setProcessedImages={setProcessedImages}
                 saveHistory={saveHistory}
               />
             </Suspense>

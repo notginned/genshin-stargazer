@@ -1,14 +1,10 @@
-import { type ChangeEvent, type Dispatch, type SetStateAction } from "react";
-import InsertPhotoIcon from '@mui/icons-material/InsertPhoto';
+import { type ChangeEvent } from "react";
+import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import type { Images } from "../../types/State.type";
 import { hashCode } from "../../utils/hash";
+import type { FilePickerProps } from "../../types/FilePickerProps";
 
-interface FolderPickerProps {
-  images: Images;
-  setImages: Dispatch<SetStateAction<Images>>;
-}
-
-function ImagePicker({ images, setImages }: FolderPickerProps) {
+function ImagePicker({ images, setImages }: FilePickerProps) {
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
 

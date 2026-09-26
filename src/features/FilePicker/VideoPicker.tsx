@@ -12,14 +12,10 @@ import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import { dedupFrames, drawFrame } from "./utils/processFrames.ts";
 import { log } from "../../utils/lib.ts";
 import { Modal } from "../../components/Modal.tsx";
-
-interface VideoPickerProps {
-  images: Images;
-  setImages: Dispatch<SetStateAction<Images>>;
-}
+import type { FilePickerProps } from "../../types/FilePickerProps.tsx";
 
 // eslint-disable-next-line
-function VideoPicker({ images, setImages }: VideoPickerProps) {
+function VideoPicker({ images, setImages }: FilePickerProps) {
   // TODO: Implement discarding dupes
   // set images from frames
   const cRef = useRef<HTMLCanvasElement | null>(null);
@@ -40,7 +36,6 @@ function VideoPicker({ images, setImages }: VideoPickerProps) {
       res[hash] = src;
 
       video.src = src;
-      // setSrc(src);
     });
 
     video.muted = true;
@@ -80,9 +75,7 @@ function VideoPicker({ images, setImages }: VideoPickerProps) {
     );
 
     mRef.current?.close();
-
     setImages((ims) => ({ ...ims, ...results }));
-    // log(results);
   };
 
   return (

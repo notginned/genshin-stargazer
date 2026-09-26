@@ -1,8 +1,7 @@
 import cvReadyPromise, { type CV } from "@techstark/opencv-js";
 
 export async function getOpenCv() {
-  const cv = await cvReadyPromise;
-  return cv;
+  return cvReadyPromise;
 }
 
 export function translateException(cv: CV, err: unknown) {
