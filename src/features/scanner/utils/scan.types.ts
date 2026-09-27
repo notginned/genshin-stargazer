@@ -1,3 +1,5 @@
+import type { SerializedImage } from "../../../types/DeserializedImage";
+
 export interface Rectangle {
   top: number;
   left: number;
@@ -6,7 +8,7 @@ export interface Rectangle {
 }
 
 export interface ScanRegions {
-  image: HTMLCanvasElement;
+  image: SerializedImage;
   rectangles: {
     itemNameRectangle: Rectangle;
     typeRectangle: Rectangle;

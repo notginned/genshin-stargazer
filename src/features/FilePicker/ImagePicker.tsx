@@ -3,20 +3,25 @@ import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import type { Images } from "../../types/State.type";
 import { hashCode } from "../../utils/hash";
 import type { FilePickerProps } from "../../types/FilePickerProps";
+import { log } from "../../utils/lib";
 
 function ImagePicker({ images, setImages }: FilePickerProps) {
-  function handleChange(e: ChangeEvent<HTMLInputElement>) {
+  async function handleChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
 
     const res: Images = {};
 
-    Array.from(e.target.files, (f) => {
-      const src = URL.createObjectURL(f);
-      const hash = "h" + hashCode(f.name + f.size + f.lastModified);
-      res[hash] = src;
-    });
+    await Promise.all(
+      Array.from(e.target.files, async (f) => {
+        // const src = URL.createObjectURL(f);
+        const data = await createImageBitmap(f);
+        const hash = "h" + hashCode(f.name + f.size + f.lastModified);
+        res[hash] = { data, hash };
+      }),
+    );
 
     const uniqueImages = { ...images, ...res };
+    log({ uniqueImages });
     setImages(uniqueImages);
   }
 
