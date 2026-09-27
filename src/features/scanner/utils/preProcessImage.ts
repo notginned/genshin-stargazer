@@ -30,14 +30,13 @@ const gammaProcess = async (
   const { height, width } = image.data;
   const newWidth = 1920;
   const newHeight = Math.round((height * 1920) / width);
-  // const input = await gm.imageTensorFromURL(image, "uint8", [height, width, 4]);
-  // const input = await tensorFromBitmap(image.data);
+
   const bitmapCanvas = new OffscreenCanvas(width, height);
   const bitmapCtx = bitmapCanvas.getContext("bitmaprenderer");
-  bitmapCtx?.transferFromImageBitmap(image.data)
+  bitmapCtx?.transferFromImageBitmap(image.data);
 
   const canvas = new OffscreenCanvas(width, height);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx?.drawImage(bitmapCanvas, 0, 0);
 
   const input = new gm.Tensor("uint8", [height, width, 4]);
@@ -49,9 +48,12 @@ const gammaProcess = async (
   whiteTensor.data.fill(255);
 
   let pipeline: typeof input | Operation = input;
-  pipeline = gm.resize(pipeline, newWidth, newHeight, "nearest");
+  pipeline = gm.resize(pipeline, newWidth, newHeight, "bicubic");
+  pipeline = gm.gaussianBlur(pipeline, 3, 1);
   pipeline = gm.grayscale(pipeline);
-  pipeline = gm.threshold(pipeline, 0.76);
+  pipeline = gm.threshold(pipeline, 0.78);
+  pipeline = gm.erode(pipeline, [1, 1]);
+  pipeline = gm.dilate(pipeline, [2, 2]);
   pipeline = gm.sub(whiteTensor, pipeline);
   const output = gm.tensorFrom(pipeline);
 
