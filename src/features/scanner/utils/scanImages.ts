@@ -37,8 +37,6 @@ const cropRegion = (img: HTMLCanvasElement, rectangle: Rectangle) => {
 };
 
 const scanSingleImage = async (region: ScanRegions) => {
-  const res: ScanResult = {} as ScanResult;
-
   const canvases = [
     region.rectangles.itemNameRectangle,
     region.rectangles.typeRectangle,
@@ -49,10 +47,12 @@ const scanSingleImage = async (region: ScanRegions) => {
   await service.initialize();
   const rps = await service.batchRecognize(canvases);
   await service.destroy();
-  res.itemName = rps[0].text;
-  res.wishType = rps[1].text;
-  res.timeReceived = rps[2].text;
-  res.pageNumber = rps[3].text;
+  const res = {
+    itemName: rps[0].text,
+    wishType: rps[1].text,
+    timeReceived: rps[2].text,
+    pageNumber: rps[3].text,
+  } satisfies ScanResult;
 
   logDebug("res", res);
 
