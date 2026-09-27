@@ -2,20 +2,20 @@ import {
   useRef,
   useState,
   type ChangeEvent,
-  type Dispatch,
-  type SetStateAction,
+  // type Dispatch,
+  // type SetStateAction,
   type SubmitEventHandler,
 } from "react";
 import { hashCode } from "../../utils/hash.ts";
 import type { Images, Videos } from "../../types/State.type.ts";
 import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import { dedupFrames, drawFrame } from "./utils/processFrames.ts";
-import { log } from "../../utils/lib.ts";
+// import { log } from "../../utils/lib.ts";
 import { Modal } from "../../components/Modal.tsx";
 import type { FilePickerProps } from "../../types/FilePickerProps.tsx";
 
 // eslint-disable-next-line
-function VideoPicker({ images, setImages }: FilePickerProps) {
+function VideoPicker({ setImages }: FilePickerProps) {
   // TODO: Implement discarding dupes
   // set images from frames
   const cRef = useRef<HTMLCanvasElement | null>(null);

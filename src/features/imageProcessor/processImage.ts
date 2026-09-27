@@ -1,4 +1,3 @@
-import { getOpenCv, translateException } from "./lib/opencv/opencv.ts";
 import type {
   bbox,
   Rectangle,
@@ -11,8 +10,7 @@ import {
   WISH_TYPE_BBOX,
 } from "../scanner/utils/config/bboxes.ts";
 import { log } from "../../utils/lib.ts";
-import { ImageError } from "../../utils/ImageError.ts";
-import { createImageFromUrl } from "../../utils/imageFromUrl.ts";
+// import { ImageError } from "../../utils/ImageError.ts";
 import { Operation } from "gammacv";
 import * as gm from "gammacv";
 

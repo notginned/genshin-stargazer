@@ -1,7 +1,5 @@
 import {
   use,
-  useCallback,
-  useEffect,
   useRef,
   useState,
   type Dispatch,
@@ -10,10 +8,7 @@ import {
 import { scanImages, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
-import {
-  gammaProcess,
-  getScanRegion,
-} from "../../imageProcessor/processImage.ts";
+import { getScanRegion } from "../../imageProcessor/processImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
 import type {
   Images,
@@ -22,14 +17,11 @@ import type {
 } from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
-import { ProgressIndicator } from "../../../components/ProgressIndicator.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
 import { isNull, log, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import type { Rectangle, ScanRegions } from "../utils/scan.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
-import { createImageFromUrl } from "../../../utils/imageFromUrl.ts";
-import { getOpenCv } from "../../imageProcessor/lib/opencv/opencv.ts";
 
 const loadScanner = async () => {
   await service.initialize();
@@ -107,21 +99,12 @@ function Scanner({
     useState<Nullable<WishHistory>>(null);
   const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
 
-  const allImagesProcessed = isEmpty(images);
-  console.log({ allImagesProcessed });
-
-  const allImagesScanned = isEmpty(processedImages);
-
-  if (allImagesProcessed) {
-    logDebug("Processed all images");
-  }
-
-  const clearScanQueue = useCallback(() => {
+  const clearScanQueue = () => {
     setIsScanning(false);
     setImages({});
-  }, [setImages]);
+  };
 
-  const handleErrorModalClose = useCallback(() => {
+  const handleErrorModalClose = () => {
     if (!error) return;
     if (!(error instanceof ImageError)) {
       clearScanQueue();
@@ -136,7 +119,7 @@ function Scanner({
     });
     clearScanQueue();
     setError(() => null);
-  }, [clearScanQueue, setProcessedImages, error]);
+  };
 
   // Image Processing
   const startProcessing = async (

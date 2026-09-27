@@ -4,20 +4,18 @@ import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
 import { mergeHistories } from "./features/dataParser/historyReducer.ts";
 import type { WishHistory } from "./types/Wish.types.ts";
 import { createEmptyWishHistory } from "./utils/createEmptyWishHistory.ts";
-import { ImagePicker } from "./features/FilePicker/ImagePicker.tsx";
 import { generateSheet } from "./features/wishTable/utils/generateSheet.ts";
 import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type { Images, ProcessedImages, Videos } from "./types/State.type.ts";
+import type { Images, ProcessedImages} from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { isNull } from "./utils/lib.ts";
 import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
-import { VideoPicker } from "./features/FilePicker/VideoPicker.tsx";
 import { FilePicker } from "./features/FilePicker/FilePicker.tsx";
 
 function App() {
