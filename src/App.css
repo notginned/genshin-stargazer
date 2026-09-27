@@ -200,6 +200,7 @@ h1:has(.heading-container) {
     grid-area: picker;
     display: flex;
     gap: 12px;
+    width: min-content;
 }
 
 .btn-scan {

@@ -2,14 +2,14 @@ import type {
   bbox,
   Rectangle,
   ScanRegions,
-} from "../scanner/utils/scan.types.ts";
+} from "./scan.types.ts";
 import {
   ITEM_NAME_BBOX,
   PAGE_COUNT_BBOX,
   TIME_RECEIVED_BBOX,
   WISH_TYPE_BBOX,
-} from "../scanner/utils/config/bboxes.ts";
-import { log } from "../../utils/lib.ts";
+} from "./config/bboxes.ts";
+import { log } from "../../../utils/lib.ts";
 // import { ImageError } from "../../utils/ImageError.ts";
 import { Operation } from "gammacv";
 import * as gm from "gammacv";
@@ -68,7 +68,7 @@ function calcRegions(image: HTMLCanvasElement): ScanRegions {
   } satisfies ScanRegions;
 }
 
-async function getScanRegion(src: string, hash: string): Promise<ScanRegions> {
+async function preProcessImage(src: string, hash: string): Promise<ScanRegions> {
   const output = await gammaProcess(src);
   output.dataset.hash = hash;
 
@@ -82,4 +82,4 @@ async function getScanRegion(src: string, hash: string): Promise<ScanRegions> {
   return region;
 }
 
-export { gammaProcess, getScanRegion };
+export { preProcessImage };

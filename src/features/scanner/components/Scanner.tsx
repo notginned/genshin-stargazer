@@ -8,7 +8,7 @@ import {
 import { scanImages, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
-import { getScanRegion } from "../../imageProcessor/processImage.ts";
+import { preProcessImage } from "../utils/preProcessImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
 import type {
   Images,
@@ -147,7 +147,7 @@ function Scanner({
     //         });
     //
     //         log(hash);
-    //         const out = await getScanRegion(src, hash);
+    //         const out = await preProcessImage(src, hash);
     //         console.log(out);
     //
     //         if (processedImages[hash]) {
@@ -155,7 +155,7 @@ function Scanner({
     //           continue;
     //         }
     //
-    //         const newScanRegion = await getScanRegion(src, hash);
+    //         const newScanRegion = await preProcessImage(src, hash);
     //         drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
     //         document.querySelector("header")?.appendChild(newScanRegion.image);
     //         result[hash] = newScanRegion;
@@ -165,7 +165,7 @@ function Scanner({
     const promises: [string, ScanRegions][] = await Promise.all(
       entries.map(async ([hash, src]) => {
         log(hash);
-        const out = await getScanRegion(src, hash);
+        const out = await preProcessImage(src, hash);
         console.log(out);
 
         if (processedImages[hash]) {
@@ -173,7 +173,7 @@ function Scanner({
           return [hash, processedImages[hash]];
         }
 
-        const newScanRegion = await getScanRegion(src, hash);
+        const newScanRegion = await preProcessImage(src, hash);
         drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
         document.querySelector("header")?.appendChild(newScanRegion.image);
 
