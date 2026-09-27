@@ -31,13 +31,21 @@ const gammaProcess = async (
   const newWidth = 1920;
   const newHeight = Math.round((height * 1920) / width);
   // const input = await gm.imageTensorFromURL(image, "uint8", [height, width, 4]);
-  const input = await tensorFromBitmap(image.data);
+  // const input = await tensorFromBitmap(image.data);
+  const bitmapCanvas = new OffscreenCanvas(width, height);
+  const bitmapCtx = bitmapCanvas.getContext("bitmaprenderer");
+  bitmapCtx?.transferFromImageBitmap(image.data)
 
-  const whiteTensor = new gm.Tensor<Uint8Array<ArrayBufferLike>>("uint8", [
-    newHeight,
-    newWidth,
-    4,
-  ]);
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  ctx?.drawImage(bitmapCanvas, 0, 0);
+
+  const input = new gm.Tensor("uint8", [height, width, 4]);
+
+  // @ts-expect-error
+  gm.canvasToTensor(canvas, input);
+
+  const whiteTensor = new gm.Tensor("uint8", [newHeight, newWidth, 4]);
   whiteTensor.data.fill(255);
 
   let pipeline: typeof input | Operation = input;
@@ -56,13 +64,13 @@ const gammaProcess = async (
 
   sess.runOp(pipeline, 0, output);
 
-  log(output.data);
+  // log(output.data);
 
-  const canvas = new OffscreenCanvas(newWidth, newHeight);
+  const outputCanvas = new OffscreenCanvas(newWidth, newHeight);
   // @ts-expect-error
-  gm.canvasFromTensor(canvas, output);
+  gm.canvasFromTensor(outputCanvas, output);
 
-  const imageBitmap = await createImageBitmap(canvas);
+  const imageBitmap = await createImageBitmap(outputCanvas);
 
   return { hash: image.hash, data: imageBitmap } satisfies SerializedImage;
 };
@@ -99,10 +107,10 @@ async function preProcessImage(image: SerializedImage): Promise<ScanRegions> {
   // output.dataset.hash = hash;
 
   if (!output) throw new Error("No offset found. Couldn't process image");
-  log("processing", output);
+  // log("processing", output);
 
   const region = calcRegions(output);
-  log("region", region);
+  // log("region", region);
   // TODO: Implement diffing based scan
 
   return region;

@@ -5,7 +5,7 @@ import type { ScanRegions } from "./scan.types";
 
 self.onmessage = async (e: MessageEvent) => {
   const { type, images, processedImages } = e.data;
-  console.log("worker", { type, images, processedImages });
+  // console.log("worker", { type, images, processedImages });
   const result = await startProcessing(images, processedImages);
   console.log('inside worker', result);
   postMessage(result);

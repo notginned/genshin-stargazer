@@ -13,15 +13,15 @@ function ImagePicker({ images, setImages }: FilePickerProps) {
 
     await Promise.all(
       Array.from(e.target.files, async (f) => {
-        // const src = URL.createObjectURL(f);
         const data = await createImageBitmap(f);
+        console.log("data", data)
         const hash = "h" + hashCode(f.name + f.size + f.lastModified);
         res[hash] = { data, hash };
       }),
     );
 
     const uniqueImages = { ...images, ...res };
-    log({ uniqueImages });
+    // log({ uniqueImages });
     setImages(uniqueImages);
   }
 

@@ -94,9 +94,23 @@ function Scanner({
       new URL("../utils/scan.worker.ts", import.meta.url),
       { type: "module" },
     );
-    worker.addEventListener("message", (e) => {
-      console.log("reply from worker", e.data);
-    });
+    worker.addEventListener(
+      "message",
+      (e: MessageEvent<{ [hash: string]: ScanRegions }>) => {
+        console.log("reply from worker", e.data);
+        const images = Object.entries(e.data);
+        const im1 = images[0];
+
+        // log(images);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("bitmaprenderer");
+        ctx?.transferFromImageBitmap(im1[1].image.data);
+        document.querySelector("header")?.appendChild(canvas);
+
+        // ctx?.drawImage(image, 0, 0, image.width, image.height);
+        // document.querySelector('main')?.appendChild(canvas);
+      },
+    );
     workerRef.current = worker;
   }, []);
 
@@ -171,7 +185,7 @@ function Scanner({
     //       }
 
     const promises: [string, ScanRegions][] = await Promise.all(
-      entries.map(async ([hash, src]) => {
+      entries.map(async ([hash, image]) => {
         // log(hash);
         // const out = await preProcessImage(src, hash);
         // console.log(out);
@@ -181,9 +195,12 @@ function Scanner({
           return [hash, processedImages[hash]];
         }
 
-        const newScanRegion = await preProcessImage(src, hash);
-        // drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
-        // document.querySelector("header")?.appendChild(newScanRegion.image);
+        const newScanRegion = await preProcessImage(image);
+        // drawBoxes(image.data, Object.values(newScanRegion.rectangles));
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("bitmaprenderer");
+        ctx?.transferFromImageBitmap(newScanRegion.image.data);
+        document.querySelector("header")?.appendChild(canvas);
 
         return [hash, newScanRegion];
       }),
@@ -221,31 +238,33 @@ function Scanner({
       const pIms = isEmpty(processedImages)
         ? await startProcessing(images, processedImages)
         : processedImages;
-      setProcessedImages((previous) => ({ ...previous, ...pIms }));
-      setImages({});
 
-      logDebug("Processing done", { pIms });
-      const scanQueue = Object.values(pIms);
+      log({ pIms });
+      //       setProcessedImages((previous) => ({ ...previous, ...pIms }));
+      //       setImages({});
+      //
+      //       logDebug("Processing done", { pIms });
+      //       const scanQueue = Object.values(pIms);
+      //
+      //       const newHistory = await startScan(scanQueue);
+      //       // Saving history to browser storage
+      //       saveHistory(newHistory);
+      //
+      //       // Showing the modal with scan results
+      //       setScanResultTable(newHistory);
+      //
+      //       // Set scanned images only after data state is set
+      //       // to avoid inconsistent cache
+      //       setScannedImages((oldImages) => ({
+      //         ...oldImages,
+      //         // Reducing our array of newly scanned images into a object of hashes
+      //         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
+      //           acc[cur.image.dataset.hash!] = true;
+      //           return acc;
+      //         }, {}),
+      //       }));
 
-      const newHistory = await startScan(scanQueue);
-      // Saving history to browser storage
-      saveHistory(newHistory);
-
-      // Showing the modal with scan results
-      setScanResultTable(newHistory);
-
-      // Set scanned images only after data state is set
-      // to avoid inconsistent cache
-      setScannedImages((oldImages) => ({
-        ...oldImages,
-        // Reducing our array of newly scanned images into a object of hashes
-        ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
-          acc[cur.image.dataset.hash!] = true;
-          return acc;
-        }, {}),
-      }));
-
-      resultsModalRef.current?.show();
+      // resultsModalRef.current?.show();
     } catch (e) {
       console.error(e);
     } finally {
@@ -256,19 +275,17 @@ function Scanner({
   const handleWorkerClick = async () => {
     if (isScanning) return;
 
-    // Use existing cache if no new images to process
-    // otherwise process new images and add them to queue
-    const pIms = isEmpty(processedImages)
-      ? await startProcessing(images, processedImages)
-      : processedImages;
-
-    workerRef.current?.postMessage({type: "scan", images, processedImages});
+    workerRef.current?.postMessage({ type: "scan", images, processedImages });
   };
 
   return (
     <>
       {!isEmpty(images) && (
-        <button type="button" className="btn btn-scan" onClick={handleWorkerClick}>
+        <button
+          type="button"
+          className="btn btn-scan"
+          onClick={handleWorkerClick}
+        >
           {isEmpty(processedImages) ? "Process" : "Scan"} Images
         </button>
       )}
