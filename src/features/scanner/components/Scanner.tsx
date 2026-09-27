@@ -31,13 +31,12 @@ import { isEmpty } from "../../../utils/isEmpty.ts";
 import { createImageFromUrl } from "../../../utils/imageFromUrl.ts";
 import { getOpenCv } from "../../imageProcessor/lib/opencv/opencv.ts";
 
-// let scannerLoaded: null | Promise<void> = null;
+const loadScanner = async () => {
+  await service.initialize();
+  return service.destroy();
+};
 
-// const loadScanner = async () => {
-// await service.initialize();
-// return service.destroy();
-// return true;
-// };
+const scannerLoaded: Promise<void> = loadScanner();
 
 const colors = [
   "#FF5733", // Bright Red-Orange
@@ -86,11 +85,7 @@ function Scanner({
   setProcessedImages,
   saveHistory,
 }: ScannerProps) {
-  //   if (!scannerLoaded) {
-  //     scannerLoaded = loadScanner();
-  //   }
-  //
-  //   use(scannerLoaded);
+  use(scannerLoaded);
 
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
@@ -144,110 +139,105 @@ function Scanner({
   }, [clearScanQueue, setProcessedImages, error]);
 
   // Image Processing
-  const startProcessing = async () => {
-    try {
-      console.log(isScanning);
-      const entries = Object.entries(images);
-      logDebug({ entries });
-      logDebug(processedImages);
+  const startProcessing = async (
+    images: Images,
+    processedImages: ProcessedImages,
+  ) => {
+    console.log(isScanning);
+    const entries = Object.entries(images);
+    logDebug({ entries });
+    logDebug(processedImages);
 
-      for (const [hash, src] of entries) {
-        // const out = await gammaProcess(src);
-        // drawBoxes(out.image, Object.values(out.rectangles));
-        // document.querySelector("header")?.appendChild(out.image);
-        // globalThis.drawBoxes = drawBoxes;
-        // out.image.addEventListener("click", (e: MouseEvent) => {
-        //   if (!(e.currentTarget instanceof HTMLCanvasElement)) return;
-        //   const rect = e.currentTarget.getBoundingClientRect();
-        //   const { left, top, width, height } = rect;
-        //   console.log({
-        //     x: (e.clientX - left) / width,
-        //     y: (e.clientY - top) / height,
-        //   });
-        // });
+    //       for (const [hash, src] of entries) {
+    //         const out = await gammaProcess(src);
+    //         drawBoxes(out.image, Object.values(out.rectangles));
+    //         document.querySelector("header")?.appendChild(out.image);
+    //         globalThis.drawBoxes = drawBoxes;
+    //         out.image.addEventListener("click", (e: MouseEvent) => {
+    //           if (!(e.currentTarget instanceof HTMLCanvasElement)) return;
+    //           const rect = e.currentTarget.getBoundingClientRect();
+    //           const { left, top, width, height } = rect;
+    //           console.log({
+    //             x: (e.clientX - left) / width,
+    //             y: (e.clientY - top) / height,
+    //           });
+    //         });
+    //
+    //         log(hash);
+    //         const out = await getScanRegion(src, hash);
+    //         console.log(out);
+    //
+    //         if (processedImages[hash]) {
+    //           logDebug("Already processed this image", hash);
+    //           continue;
+    //         }
+    //
+    //         const newScanRegion = await getScanRegion(src, hash);
+    //         drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
+    //         document.querySelector("header")?.appendChild(newScanRegion.image);
+    //         result[hash] = newScanRegion;
+    //         console.log("result", { result });
+    //       }
 
+    const promises: [string, ScanRegions][] = await Promise.all(
+      entries.map(async ([hash, src]) => {
         log(hash);
         const out = await getScanRegion(src, hash);
         console.log(out);
 
         if (processedImages[hash]) {
           logDebug("Already processed this image", hash);
-          continue;
+          return [hash, processedImages[hash]];
         }
 
         const newScanRegion = await getScanRegion(src, hash);
         drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
         document.querySelector("header")?.appendChild(newScanRegion.image);
 
-        // result[hash] = newScanRegion;
-        // console.log("result", { result });
-      }
+        return [hash, newScanRegion];
+      }),
+    );
+    const result = Object.fromEntries(promises);
+    logDebug("result", { result });
 
-      const promises: [string, ScanRegions][] = await Promise.all(
-        entries.map(async ([hash, src]) => {
-          log(hash);
-          const out = await getScanRegion(src, hash);
-          console.log(out);
+    return { ...processedImages, ...result };
 
-          if (processedImages[hash]) {
-            logDebug("Already processed this image", hash);
-            return [hash, processedImages[hash]];
-          }
-
-          const newScanRegion = await getScanRegion(src, hash);
-          drawBoxes(
-            newScanRegion.image,
-            Object.values(newScanRegion.rectangles),
-          );
-          document.querySelector("header")?.appendChild(newScanRegion.image);
-
-          return [hash, newScanRegion];
-        }),
-      );
-      const result = Object.fromEntries(promises);
-      console.log("result", { result });
-
-      // setProcessedImages((prevHashes) => ({
-      //   ...prevHashes,
-      //   ...result,
-      // }));
-      // setImages({});
-    } catch (e) {
-      if (e instanceof ImageError) {
-        setError(e);
-      }
-      console.error(e);
-    }
+    // setProcessedImages((prevHashes) => ({
+    //   ...prevHashes,
+    //   ...result,
+    // }));
+    // setImages({});
   };
 
   // Function to handle scanning
-  const startScan = useCallback(async () => {
-    if (isScanning) {
-      logDebug("Already scanning");
-      return;
+  const startScan = async (queue: ScanRegions[]) => {
+    const scanResults = await scanImages(queue);
+    logDebug("scan results", scanResults);
+
+    if (scanResults.some((r) => r.itemName.length === 0)) {
+      throw new Error("Could not scan image");
     }
-    // logDebug("clicked", { scanQueue });
 
-    // No new images
-    // if (scanQueue.length === 0) {
-    //   logDebug("There are no new images");
-    //   clearScanQueue();
-    //   return;
-    // }
+    const newHistory = processHistory(scanResults);
+    // logDebug("newHistory", newHistory);
 
-    // Critical Section
-    setIsScanning(true);
+    return newHistory;
+  };
+
+  const handleClick = async () => {
     try {
-      const scanResults = await scanImages(scanQueue);
-      logDebug("scan results", scanResults);
+      if (isScanning) return;
 
-      if (scanResults.some((r) => r.itemName.length === 0)) {
-        throw new Error("Could not scan image");
-      }
+      const pIms = isEmpty(processedImages)
+        ? await startProcessing(images, processedImages)
+        : processedImages;
+      setProcessedImages((previous) => ({ ...previous, ...pIms }));
+      setImages({});
 
-      const newHistory = processHistory(scanResults);
-      // logDebug("newHistory", newHistory);
+      console.log("Processing done");
+      console.log("processed", { pIms });
 
+      const newHistory = await startScan(Object.values(pIms));
       // Saving history to browser storage
       saveHistory(newHistory);
 
@@ -265,22 +255,12 @@ function Scanner({
         }, {}),
       }));
 
-      if (resultsModalRef.current) resultsModalRef.current.show();
-    } catch (error) {
-      console.error("Error scanning images", error);
-      if (!(error instanceof Error)) return;
-      setError(error);
+      resultsModalRef.current?.show();
+    } catch (e) {
+      console.error(e);
     } finally {
-      // Cleanup
-      // Reset scan state
       clearScanQueue();
     }
-  }, [isScanning, saveHistory, scanQueue, setScannedImages, clearScanQueue]);
-
-  const handleClick = async () => {
-    await startProcessing();
-    console.log("Processing done");
-    // await startScan();
   };
 
   return (
@@ -294,13 +274,9 @@ function Scanner({
       )}
       {isScanning && <ProgressIndicator />}*/}
 
-      {!isEmpty(images) ? (
+      {!isEmpty(images) && (
         <button type="button" className="btn btn-scan" onClick={handleClick}>
-          Process Images ()
-        </button>
-      ) : (
-        <button type="button" className="btn btn-scan" onClick={startScan}>
-          Scan Images ()
+          {isEmpty(processedImages) ? "Process" : "Scan"} Images
         </button>
       )}
 
