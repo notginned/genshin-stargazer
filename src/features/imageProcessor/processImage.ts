@@ -1,5 +1,9 @@
 import { getOpenCv, translateException } from "./lib/opencv/opencv.ts";
-import type { bbox, Rectangle, ScanRegions } from "../scanner/utils/scan.types.ts";
+import type {
+  bbox,
+  Rectangle,
+  ScanRegions,
+} from "../scanner/utils/scan.types.ts";
 import {
   ITEM_NAME_BBOX,
   PAGE_COUNT_BBOX,
@@ -9,12 +13,15 @@ import {
 import { log } from "../../utils/lib.ts";
 import { ImageError } from "../../utils/ImageError.ts";
 import { createImageFromUrl } from "../../utils/imageFromUrl.ts";
+import { Operation } from "gammacv";
+import * as gm from "gammacv";
 
 async function preprocessImage(input: HTMLImageElement) {
   try {
     const output = document.createElement("canvas");
     // Should never happen
-    if (input.dataset.hash === undefined) throw new Error("Image does not exist");
+    if (input.dataset.hash === undefined)
+      throw new Error("Image does not exist");
 
     // Copy image hash to our processed canvas
     output.dataset.hash = input.dataset.hash;
@@ -25,7 +32,7 @@ async function preprocessImage(input: HTMLImageElement) {
 
     // Resizing while maintaining aspect ratio for faster OCR
     const newWidth = 1920;
-    const newHeight = 1920 * input.naturalHeight / input.naturalWidth;
+    const newHeight = (1920 * input.naturalHeight) / input.naturalWidth;
     if (input.width !== 1920) {
       cv.resize(
         src,
@@ -101,6 +108,33 @@ async function preprocessImage(input: HTMLImageElement) {
   }
 }
 
+const gammaProcess = async (src: string) => {
+  const height = 886;
+  const width = 1920;
+  const input = await gm.imageTensorFromURL(src, "uint8", [height, width, 4]);
+  // gm.resize(input, newWidth, newHeight, "nearest");
+  const whiteTensor = new gm.Tensor('uint8', [height, width, 4]);
+  whiteTensor.data.fill(255);
+
+  let pipeline: typeof input | Operation = input;
+  pipeline = gm.grayscale(pipeline);
+  pipeline = gm.threshold(pipeline, 0.69);
+  pipeline = gm.sub(whiteTensor, pipeline)
+  const output = gm.tensorFrom(pipeline);
+  const sess = new gm.Session();
+  sess.init(pipeline);
+
+  // run your operation
+  if (output === null) throw new Error("Error procesing");
+  sess.runOp(pipeline, 0, output);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  gm.canvasFromTensor(canvas, output);
+  return canvas;
+};
+
 function getRectangle(
   bbox: bbox,
   offset: { top: number; left: number; height: number; width: number },
@@ -144,7 +178,9 @@ async function getScanRegion(src: string, hash: string): Promise<ScanRegions> {
   // This means the image was not a valid wish history screenshot
   if (
     Object.values(region.rectangles).some((rect) =>
-      Object.values(rect).some((value) => Number.isNaN(value) || !Number.isFinite(value)),
+      Object.values(rect).some(
+        (value) => Number.isNaN(value) || !Number.isFinite(value),
+      ),
     )
   ) {
     throw new ImageError("Not a valid wish history screenshot", image);
@@ -153,4 +189,4 @@ async function getScanRegion(src: string, hash: string): Promise<ScanRegions> {
   return region;
 }
 
-export { getScanRegion };
+export { gammaProcess, getScanRegion };

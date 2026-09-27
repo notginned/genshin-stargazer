@@ -10,7 +10,7 @@ import {
 import { scanImages, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
-import { getScanRegion } from "../../imageProcessor/processImage.ts";
+import { gammaProcess, getScanRegion } from "../../imageProcessor/processImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
 import type {
   Images,
@@ -148,6 +148,9 @@ function Scanner({
       const entries = Object.entries(images);
       logDebug({ entries });
       logDebug(processedImages);
+      const out = await gammaProcess(entries[0][1]);
+      console.log(out);
+      document.querySelector("header")?.appendChild(out);
       for (const [hash, src] of entries) {
         log(hash);
         // if (processedImages[hash]) {
@@ -155,19 +158,19 @@ function Scanner({
         //   continue;
         // }
 
-        const newScanRegion = await getScanRegion(src, hash);
+        // const newScanRegion = await getScanRegion(src, hash);
         // drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
         // document.querySelector("header")?.appendChild(newScanRegion.image);
 
-        result[hash] = newScanRegion;
+        // result[hash] = newScanRegion;
       }
       log({ result });
 
-      setProcessedImages((prevHashes) => ({
-        ...prevHashes,
-        ...result,
-      }));
-      setImages({});
+      // setProcessedImages((prevHashes) => ({
+      //   ...prevHashes,
+      //   ...result,
+      // }));
+      // setImages({});
     } catch (e) {
       if (e instanceof ImageError) {
         setError(e);
