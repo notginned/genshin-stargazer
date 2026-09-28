@@ -18,23 +18,24 @@ self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
     case "process": {
       // Warming up the service
       await serviceLoaded();
-      log("From worker", e.data);
+      // log("From worker", e.data);
       const images = e.data.images;
+
       // Cannot use a cache because the Bitmaps get consumed upon scanning
-      // plus processing is cheap
+      // plus processing is cheap anyways
       try {
         const arr = Object.values(images);
         let counter = 0;
         const total = arr.length * 2;
         const preprocessed = await preprocessImages(arr, () =>
-          postMessage({ type: "preprocess_progress", value: ++counter / total }),
+          postMessage({ type: "progress", value: ++counter / total }),
         );
         const newHistory = await startScan(preprocessed, () =>
-          postMessage({ type: "scan_progress", value: ++counter / total }),
+          postMessage({ type: "progress", value: ++counter / total }),
         );
 
-        log("From worker", newHistory);
-        self.postMessage({ type: "scanResult", newHistory });
+        // log("From worker", newHistory);
+        self.postMessage({ type: "result", newHistory });
       } catch (error) {
         self.postMessage({ type: "error", error });
       }

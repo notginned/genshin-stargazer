@@ -72,7 +72,7 @@ export const scanSingleImage = async (region: ScanRegions) => {
     pageNumber: rps[3].text,
   } satisfies ScanResult;
 
-  logDebug("res", res);
+  // logDebug("res", res);
 
   return res;
 };

@@ -20,7 +20,7 @@ function prepareColumn(data: string, header: string, tolerance: number): string[
   const splitted = data.split('\n');
   // Excluding the searched header
   const items = splitted.slice(1 + splitted.findIndex(x => header === correctName(x, headersDict, tolerance)[0]));
-  
+
   return items;
 }
 
@@ -93,8 +93,8 @@ function parseScanResults(data: ScanResult): Wish[] {
       new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf()
   );
 
-  log("cols", {itemNamesCol, wishTypesCol, timeReceived})
-  log("sanitized", {itemNames, wishTypes, timeReceived})
+  // log("cols", {itemNamesCol, wishTypesCol, timeReceived})
+  // log("sanitized", {itemNames, wishTypes, timeReceived})
 
 
   const wishes = itemNames.map<Wish>((itemName, i) => {
@@ -108,7 +108,7 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
-  logDebug("wish", wishes);
+  // logDebug("wish", wishes);
   return wishes;
 }
 
