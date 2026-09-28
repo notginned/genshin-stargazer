@@ -27,10 +27,14 @@ const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
   const ctx = canvas.getContext("2d");
   ctx?.drawImage(
     image,
-    rectangle.left,
-    rectangle.top,
-    rectangle.width,
-    rectangle.height,
+    rectangle.left, // source xstart
+    rectangle.top, // source ystart
+    rectangle.width, // width of crop
+    rectangle.height, // height of crop
+    0, // dest start x
+    0, // dest start y
+    rectangle.width, // dest width
+    rectangle.height, // dest height
   );
 
   return canvas;
@@ -44,7 +48,7 @@ const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
   // );
 };
 
-const scanSingleImage = async (region: ScanRegions) => {
+export const scanSingleImage = async (region: ScanRegions) => {
   const canvas = new OffscreenCanvas(region.image.width, region.image.height);
   const ctx = canvas.getContext("bitmaprenderer");
   ctx?.transferFromImageBitmap(region.image);

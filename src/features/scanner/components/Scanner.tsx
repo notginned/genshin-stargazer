@@ -6,7 +6,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { scanImages, service } from "../utils/scanImages.ts";
+import { scanImages, scanSingleImage, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 import { preProcessImage } from "../utils/preProcessImage.ts";
@@ -233,15 +233,41 @@ function Scanner({
     try {
       if (isScanning) return;
 
+      const res = Object.values(images);
+      const img = await createImageBitmap(res[0].file);
+      const hash = res[0].hash;
+      log("Images: From worker", img);
+      // const preprocessed = await gammaProcess(img, hash);
+      // log("Processed", preprocessed);
+      const processed = await preProcessImage(img, hash);
+      log("Processed", processed);
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("bitmaprenderer");
+      ctx?.transferFromImageBitmap(processed.image);
+      document.querySelector("main")?.appendChild(canvas);
+
+      const w = 600;
+      const h = 150;
+      const subcanvas = document.createElement("canvas");
+      subcanvas.width = w;
+      subcanvas.height = h;
+      const sctx = subcanvas.getContext("2d");
+      sctx?.drawImage(canvas, 0, 0, w, h, 0, 0, w, h);
+      document.querySelector("main")?.appendChild(subcanvas);
+      // const scanned = await scanSingleImage(processed);
+      // log(scanned);
+      // const scanQueue = await startScan([processed]);
+
       // Use existing cache if no new images to process
       // otherwise process new images and add them to queue
-      const pIms = isEmpty(processedImages)
-        ? await startProcessing(images, processedImages)
-        : processedImages;
-
-      log({ pIms });
-      const res = await startScan(Object.values(pIms));
-      console.log(res);
+      //       const pIms = isEmpty(processedImages)
+      //         ? await startProcessing(images, processedImages)
+      //         : processedImages;
+      //
+      //       log({ pIms });
+      //       const res = await startScan(Object.values(pIms));
+      //       console.log(res);
       //       setProcessedImages((previous) => ({ ...previous, ...pIms }));
       //       setImages({});
       //
@@ -277,17 +303,17 @@ function Scanner({
   const handleWorkerClick = async () => {
     if (isScanning) return;
 
-    workerRef.current?.postMessage({ type: "process", images, processedImages });
+    workerRef.current?.postMessage({
+      type: "process",
+      images,
+      processedImages,
+    });
   };
 
   return (
     <>
       {!isEmpty(images) && (
-        <button
-          type="button"
-          className="btn btn-scan"
-          onClick={handleWorkerClick}
-        >
+        <button type="button" className="btn btn-scan" onClick={handleWorkerClick}>
           {isEmpty(processedImages) ? "Process" : "Scan"} Images
         </button>
       )}
