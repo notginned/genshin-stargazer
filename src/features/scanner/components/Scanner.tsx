@@ -93,6 +93,7 @@ function Scanner({
       },
     );
     workerRef.current = worker;
+
   }, []);
 
   // logDebug("processedImages", processedImages);

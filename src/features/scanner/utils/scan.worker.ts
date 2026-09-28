@@ -7,7 +7,7 @@ import { scanImages, service } from "./scanImages";
 
 const serviceLoaded = async () => {
   await service.initialize();
-  await service.destroy()
+  await service.destroy();
   return true;
 };
 
@@ -23,14 +23,22 @@ self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
       // Cannot use a cache because the Bitmaps get consumed upon scanning
       // plus processing is cheap
       try {
-        const preprocessed = await preprocessImages(images);
-        const newHistory = await startScan(preprocessed);
+        const arr = Object.values(images);
+        let counter = 0;
+        const total = arr.length * 2;
+        const preprocessed = await preprocessImages(arr, () =>
+          postMessage({ type: "preprocess_progress", value: ++counter / total }),
+        );
+        const newHistory = await startScan(preprocessed, () =>
+          postMessage({ type: "scan_progress", value: ++counter / total }),
+        );
 
         log("From worker", newHistory);
         self.postMessage({ type: "scanResult", newHistory });
       } catch (error) {
-        self.postMessage({type: "error", error})
+        self.postMessage({ type: "error", error });
       }
+      break;
     }
   }
 };
@@ -73,8 +81,8 @@ self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
 //   // setImages({});
 // }
 //
-async function startScan(queue: ScanRegions[]) {
-  const scanResults = await scanImages(queue);
+async function startScan(queue: ScanRegions[], callback?: () => void) {
+  const scanResults = await scanImages(queue, callback);
 
   if (scanResults.some((r) => r.itemName.length === 0)) {
     throw new Error("Could not scan image");

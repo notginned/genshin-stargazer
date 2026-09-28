@@ -79,12 +79,14 @@ export const scanSingleImage = async (region: ScanRegions) => {
 
 export async function scanImages(
   regions: ScanRegions[],
-  callback: (region: ScanRegions) => void = (region) => logDebug(region),
+  callback?: () => void,
 ): Promise<ScanResult[]> {
   const res = await Promise.all(
     regions.map(async (region) => {
-      callback(region);
-      return scanSingleImage(region);
+      return scanSingleImage(region).then(res => {
+        if (callback) callback();
+        return res;
+      });
     }),
   );
   const filtered = Object.values(

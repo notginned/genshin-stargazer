@@ -121,12 +121,17 @@ async function preprocessSingleImage(
   return region;
 }
 
-async function preprocessImages(images: Images): Promise<ScanRegions[]> {
-  const arr = Object.values(images);
+async function preprocessImages(
+  images: SerializedImage[],
+  callback?: (idx: number) => void,
+): Promise<ScanRegions[]> {
   const res = await Promise.all(
-    arr.map(async (img) => {
+    images.map(async (img, idx) => {
       const bitmap = await createImageBitmap(img.file);
-      const processed = preprocessSingleImage(bitmap, img.hash);
+      const processed = preprocessSingleImage(bitmap, img.hash).then(region => {
+        if (callback) callback(idx);
+        return region;
+      });
       return processed;
     }),
   );
