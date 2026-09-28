@@ -197,10 +197,10 @@ function Scanner({
 
         const newScanRegion = await preProcessImage(image);
         // drawBoxes(image.data, Object.values(newScanRegion.rectangles));
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("bitmaprenderer");
-        ctx?.transferFromImageBitmap(newScanRegion.image.data);
-        document.querySelector("header")?.appendChild(canvas);
+        // const canvas = document.createElement("canvas");
+        // const ctx = canvas.getContext("bitmaprenderer");
+        // ctx?.transferFromImageBitmap(newScanRegion.image.data);
+        // document.querySelector("header")?.appendChild(canvas);
 
         return [hash, newScanRegion];
       }),
@@ -240,6 +240,8 @@ function Scanner({
         : processedImages;
 
       log({ pIms });
+      const res = await startScan(Object.values(pIms));
+      console.log(res);
       //       setProcessedImages((previous) => ({ ...previous, ...pIms }));
       //       setImages({});
       //

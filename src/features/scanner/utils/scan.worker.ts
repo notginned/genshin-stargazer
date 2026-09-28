@@ -1,22 +1,26 @@
 import type { Images, ProcessedImages } from "../../../types/State.type";
-import { logDebug } from "../../../utils/lib";
+import { log, logDebug } from "../../../utils/lib";
 import { processHistory } from "../../dataParser/processHistory";
 import { preProcessImage } from "./preProcessImage";
 import type { ScanRegions } from "./scan.types";
 import { scanImages } from "./scanImages";
 
-self.onmessage = async (e: MessageEvent) => {
+self.onmessage = async (e: MessageEvent<{ type: string; images: Images, processedImages: ProcessedImages }>) => {
   // console.log("worker", { type, images, processedImages });
   const { type } = e.data;
   switch (type) {
     case "process": {
-      const { images, processedImages } = e.data;
-      const scanQueue = await startProcessing(images, processedImages);
-      console.log("inside worker", { scanQueue });
+      log("From worker", e.data);
+      const res = Object.values(e.data.images);
+      const img = await createImageBitmap(res[0].file);
+      log("Images: From worker", img);
 
-      const result = await startScan(Object.values(scanQueue));
-      console.log("inside worker result", { result });
-      return postMessage(result);
+      // const scanQueue = await startProcessing(images, processedImages);
+      // console.log("inside worker", { scanQueue });
+
+      // const result = await startScan(Object.values(scanQueue));
+      // console.log("inside worker result", { result });
+      // return postMessage(result);
     }
   }
 };

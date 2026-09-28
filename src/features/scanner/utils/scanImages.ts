@@ -23,7 +23,7 @@ const cropRegion = async (img: OffscreenCanvas, rectangle: Rectangle) => {
   // canvas.height = rectangle.height;
   // const ctx = canvas.getContext("2d")!;
 
-  const canvas = new OffscreenCanvas(img.width, img.height);
+  const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
   const ctx = canvas.getContext('2d');
   ctx?.drawImage(img, rectangle.left, rectangle.top, rectangle.width, rectangle.height)
 

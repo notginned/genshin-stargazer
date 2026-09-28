@@ -118,4 +118,4 @@ async function preProcessImage(image: SerializedImage): Promise<ScanRegions> {
   return region;
 }
 
-export { preProcessImage };
+export { gammaProcess, preProcessImage };

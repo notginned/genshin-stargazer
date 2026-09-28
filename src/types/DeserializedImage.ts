@@ -1,5 +1,5 @@
 interface SerializedImage {
-  data: ImageBitmap;
+  file: File;
   hash: string;
 }
 
