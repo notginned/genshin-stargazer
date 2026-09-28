@@ -17,30 +17,46 @@ export const service = new PaddleOcrService({
   },
 });
 
-const cropRegion = async (img: SerializedImage, rectangle: Rectangle) => {
+const cropRegion = async (img: OffscreenCanvas, rectangle: Rectangle) => {
   // const canvas = document.createElement("canvas");
   // canvas.width = rectangle.width;
   // canvas.height = rectangle.height;
   // const ctx = canvas.getContext("2d")!;
-  const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
-  const ctx = canvas.getContext("bitmaprenderer");
-  ctx?.transferFromImageBitmap(img.data);
+
+  const canvas = new OffscreenCanvas(img.width, img.height);
+  const ctx = canvas.getContext('2d');
+  ctx?.drawImage(img, rectangle.left, rectangle.top, rectangle.width, rectangle.height)
 
   return canvas;
+
+  // return createImageBitmap(
+  //   img.data,
+  //   rectangle.left,
+  //   rectangle.top,
+  //   rectangle.width,
+  //   rectangle.height,
+  // );
 };
 
 const scanSingleImage = async (region: ScanRegions) => {
-  const canvases = await Promise.all(
+  const canvas = new OffscreenCanvas(
+    region.image.data.width,
+    region.image.data.height,
+  );
+  const ctx = canvas.getContext("bitmaprenderer");
+  ctx?.transferFromImageBitmap(region.image.data);
+
+  const rects = await Promise.all(
     [
       region.rectangles.itemNameRectangle,
       region.rectangles.typeRectangle,
       region.rectangles.timeRectangle,
       region.rectangles.pageRectangle,
-    ].map((r) => cropRegion(region.image, r)),
+    ].map((r) => cropRegion(canvas, r)),
   );
 
   await service.initialize();
-  const rps = await service.batchRecognize(canvases);
+  const rps = await service.batchRecognize(rects);
   await service.destroy();
   const res = {
     itemName: rps[0].text,

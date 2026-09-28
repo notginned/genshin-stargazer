@@ -99,13 +99,13 @@ function Scanner({
       (e: MessageEvent<{ [hash: string]: ScanRegions }>) => {
         console.log("reply from worker", e.data);
         const images = Object.entries(e.data);
-        images.forEach(([hash, img]) => {
-          // log(images);
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("bitmaprenderer");
-          ctx?.transferFromImageBitmap(img.image.data);
-          document.querySelector("header")?.appendChild(canvas);
-        });
+        // images.forEach(([hash, img]) => {
+        //   // log(images);
+        //   const canvas = document.createElement("canvas");
+        //   const ctx = canvas.getContext("bitmaprenderer");
+        //   ctx?.transferFromImageBitmap(img.image.data);
+        //   document.querySelector("header")?.appendChild(canvas);
+        // });
 
         // ctx?.drawImage(image, 0, 0, image.width, image.height);
         // document.querySelector('main')?.appendChild(canvas);
