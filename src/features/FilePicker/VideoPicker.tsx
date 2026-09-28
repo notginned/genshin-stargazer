@@ -7,19 +7,20 @@ import {
   type SubmitEventHandler,
 } from "react";
 import { hashCode } from "../../utils/hash.ts";
-import type { Images, Videos } from "../../types/State.type.ts";
+import type { Frames, Images, Videos } from "../../types/State.type.ts";
 import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import { dedupFrames, drawFrame } from "./utils/processFrames.ts";
 // import { log } from "../../utils/lib.ts";
 import { Modal } from "../../components/Modal.tsx";
 import type { FilePickerProps } from "../../types/FilePickerProps.tsx";
+import { fileFromCanvas } from "./utils/fileFromCanvas.ts";
 
 // eslint-disable-next-line
 function VideoPicker({ setImages }: FilePickerProps) {
   // TODO: Implement discarding dupes
   // set images from frames
   const cRef = useRef<HTMLCanvasElement | null>(null);
-  const [screens, setScreens] = useState<Images>({});
+  const [screens, setScreens] = useState<Frames>({});
   const pRef = useRef<HTMLProgressElement | null>(null);
   const mRef = useRef<HTMLDialogElement | null>(null);
   const fRef = useRef<HTMLFormElement | null>(null);
@@ -54,19 +55,20 @@ function VideoPicker({ setImages }: FilePickerProps) {
 
     video.addEventListener("playing", () => console.log("playing"));
 
-    video.addEventListener("ended", async () => {
-      console.log(frames);
-      setScreens(await dedupFrames(frames, video));
+    video.addEventListener("ended", () => {
+      const uniqueFrames = dedupFrames(frames, video);
+      setScreens(() => uniqueFrames);
+      console.log(uniqueFrames);
       if (mRef.current) mRef.current.showModal();
       if (pRef.current) pRef.current.value = 0;
     });
   }
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    if (fRef.current === null) return;
 
-    const results = [...new FormData(e.currentTarget).entries()].reduce<Images>(
+    if (fRef.current === null) return;
+    const results = [...new FormData(e.currentTarget).entries()].reduce<Frames>(
       (acc, [, hash]) => {
         acc[hash as string] = screens[hash as string];
         return acc;
@@ -74,8 +76,19 @@ function VideoPicker({ setImages }: FilePickerProps) {
       {},
     );
 
+    const files = await Promise.all(
+      Object.values(results).map((frame, i) => {
+        return fileFromCanvas(frame, frame.dataset.hash || `frame ${i}`);
+      }),
+    );
+
+    const images = files.reduce<Images>((acc, cur) => {
+      acc[cur.name] = { file: cur, hash: cur.name };
+      return acc;
+    }, {});
+
     mRef.current?.close();
-    setImages((ims) => ({ ...ims, ...results }));
+    setImages((previousImages) => ({ ...previousImages, ...images }));
   };
 
   return (
@@ -95,7 +108,7 @@ function VideoPicker({ setImages }: FilePickerProps) {
           <div className="video-result-frames">
             {Object.entries(screens).map(([hash, url]) => (
               <label key={hash}>
-                <img data-hash={hash} src={url} />
+                <img data-hash={hash} src={url.toDataURL('image/png')} />
                 <input
                   type="checkbox"
                   name="frame"

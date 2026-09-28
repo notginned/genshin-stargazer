@@ -1,4 +1,4 @@
-import { type Images } from "../../../types/State.type";
+import { type Frames, type Images } from "../../../types/State.type";
 import { hashCode } from "../../../utils/hash";
 import { log } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
@@ -46,10 +46,10 @@ const drawFrame = (
   video.requestVideoFrameCallback(updateCanvas);
 };
 
-const dedupFrames = async (
+const dedupFrames = (
   frames: HTMLCanvasElement[],
   video: HTMLVideoElement,
-) => {
+): Frames => {
   const f = Object.values(frames);
   let L = 0;
   let R = L + 1;
@@ -59,29 +59,29 @@ const dedupFrames = async (
   const res: HTMLCanvasElement[] = [];
 
   while (R < f.length) {
-    const diff = await getDiff(frames[L], frames[R], width, height);
+    const diff = getDiff(frames[L], frames[R], width, height);
     const diffP = (diff / (width * height)) * 100;
 
     if (diffP > 0.5) {
       res.push(frames[L]);
     }
 
-    log(`diff ${R}: ${diffP}%`);
+    // log(`diff ${R}: ${diffP}%`);
     L++;
     R++;
   }
 
   // Adding the last frame if its different;
-  const diff = await getDiff(frames[L], res[res.length - 1], width, height);
+  const diff = getDiff(frames[L], res[res.length - 1], width, height);
   const diffP = (diff / (width * height)) * 100;
 
   if (diffP > 0.5) {
     res.push(frames[L]);
   }
 
-  return res.reduce<Images>((acc, cur) => {
+  return res.reduce<Frames>((acc, cur) => {
     if (cur.dataset.hash) {
-      acc[cur.dataset.hash] = cur.toDataURL("image/png");
+      acc[cur.dataset.hash] = cur;
     }
     return acc;
   }, {});

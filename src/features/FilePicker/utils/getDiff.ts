@@ -1,6 +1,6 @@
 import pixelmatch from "pixelmatch";
 
-const getDiff = async (
+const getDiff = (
   img1: HTMLCanvasElement,
   img2: HTMLCanvasElement,
   width: number,
