@@ -9,7 +9,7 @@ import {
 import { scanImages, scanSingleImage, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
-import { preProcessImage } from "../utils/preProcessImage.ts";
+// import { preProcessImage } from "../utils/preProcessImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
 import type {
   Images,
@@ -23,13 +23,6 @@ import { isNull, log, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import type { Rectangle, ScanRegions } from "../utils/scan.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
-
-// const loadScanner = async () => {
-//   await service.initialize();
-//   return service.destroy();
-// };
-
-// const scannerLoaded: Promise<void> = loadScanner();
 
 const colors = [
   "#FF5733", // Bright Red-Orange
@@ -78,7 +71,6 @@ function Scanner({
   setProcessedImages,
   saveHistory,
 }: ScannerProps) {
-  // use(scannerLoaded);
 
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
@@ -98,17 +90,6 @@ function Scanner({
       "message",
       (e: MessageEvent<{ [hash: string]: ScanRegions }>) => {
         console.log("reply from worker", e.data);
-        const images = Object.entries(e.data);
-        // images.forEach(([hash, img]) => {
-        //   // log(images);
-        //   const canvas = document.createElement("canvas");
-        //   const ctx = canvas.getContext("bitmaprenderer");
-        //   ctx?.transferFromImageBitmap(img.image.data);
-        //   document.querySelector("header")?.appendChild(canvas);
-        // });
-
-        // ctx?.drawImage(image, 0, 0, image.width, image.height);
-        // document.querySelector('main')?.appendChild(canvas);
       },
     );
     workerRef.current = worker;
@@ -239,7 +220,7 @@ function Scanner({
       log("Images: From worker", img);
       // const preprocessed = await gammaProcess(img, hash);
       // log("Processed", preprocessed);
-      const processed = await preProcessImage(img, hash);
+      // const processed = await preProcessImage(img, hash);
       log("Processed", processed);
 
       const canvas = document.createElement("canvas");

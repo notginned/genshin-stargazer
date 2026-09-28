@@ -10,6 +10,7 @@ import { log } from "../../../utils/lib.ts";
 import { Operation } from "gammacv";
 import * as gm from "gammacv";
 import type { SerializedImage } from "../../../types/DeserializedImage.ts";
+import type { Images } from "../../../types/State.type.ts";
 
 const tensorFromBitmap = async (image: ImageBitmap) => {
   const { width, height } = image;
@@ -24,10 +25,7 @@ const tensorFromBitmap = async (image: ImageBitmap) => {
   return new gm.Tensor("uint8", [height, width, 4], tensorData);
 };
 
-const gammaProcess = async (
-  image: ImageBitmap,
-  hash: string,
-) => {
+const gammaProcess = async (image: ImageBitmap, hash: string) => {
   const { height, width } = image;
   const newWidth = 1920;
   const newHeight = Math.round((height * 1920) / width);
@@ -95,6 +93,7 @@ function calcRegions(image: ImageBitmap, hash: string): ScanRegions {
 
   return {
     image,
+    hash,
     rectangles: {
       itemNameRectangle,
       typeRectangle,
@@ -104,19 +103,34 @@ function calcRegions(image: ImageBitmap, hash: string): ScanRegions {
   } satisfies ScanRegions;
 }
 
-async function preProcessImage(image: ImageBitmap, hash: string): Promise<ScanRegions> {
+async function preprocessSingleImage(
+  image: ImageBitmap,
+  hash: string,
+): Promise<ScanRegions> {
   const output = await gammaProcess(image, hash);
 
   // output.dataset.hash = hash;
 
   if (!output) throw new Error("No offset found. Couldn't process image");
-  log("processing", output);
+  // log("processing", output);
 
   const region = calcRegions(output.data, output.hash);
-  log("region", region);
+  // log("region", region);
   // TODO: Implement diffing based scan
 
   return region;
 }
 
-export { gammaProcess, preProcessImage };
+async function preprocessImages(images: Images): Promise<ScanRegions[]> {
+  const arr = Object.values(images);
+  const res = await Promise.all(
+    arr.map(async (img) => {
+      const bitmap = await createImageBitmap(img.file);
+      const processed = preprocessSingleImage(bitmap, img.hash);
+      return processed;
+    }),
+  );
+  return res;
+}
+
+export { gammaProcess, preprocessImages };

@@ -88,13 +88,11 @@ export async function scanImages(
     }),
   );
   const filtered = Object.values(
-    res.reduce<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
+    res.reduceRight<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
       acc[cur.pageNumber] = cur;
       return acc;
     }, {}),
   );
-
-  console.error(filtered);
 
   return filtered;
 }
