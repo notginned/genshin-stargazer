@@ -8,7 +8,7 @@ export interface Rectangle {
 }
 
 export interface ScanRegions {
-  image: SerializedImage;
+  image: ImageBitmap;
   rectangles: {
     itemNameRectangle: Rectangle;
     typeRectangle: Rectangle;

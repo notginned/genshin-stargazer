@@ -1,7 +1,7 @@
 import type { Images, ProcessedImages } from "../../../types/State.type";
 import { log, logDebug } from "../../../utils/lib";
 import { processHistory } from "../../dataParser/processHistory";
-import { preProcessImage } from "./preProcessImage";
+import { gammaProcess, preProcessImage } from "./preProcessImage";
 import type { ScanRegions } from "./scan.types";
 import { scanImages } from "./scanImages";
 
@@ -13,8 +13,12 @@ self.onmessage = async (e: MessageEvent<{ type: string; images: Images, processe
       log("From worker", e.data);
       const res = Object.values(e.data.images);
       const img = await createImageBitmap(res[0].file);
+      const hash = res[0].hash;
       log("Images: From worker", img);
-
+      // const preprocessed = await gammaProcess(img, hash);
+      // log("Processed", preprocessed);
+      const processed = await preProcessImage(img, hash);
+      log("Processed", processed);
       // const scanQueue = await startProcessing(images, processedImages);
       // console.log("inside worker", { scanQueue });
 

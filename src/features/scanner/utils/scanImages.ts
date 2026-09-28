@@ -17,15 +17,21 @@ export const service = new PaddleOcrService({
   },
 });
 
-const cropRegion = async (img: OffscreenCanvas, rectangle: Rectangle) => {
+const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
   // const canvas = document.createElement("canvas");
   // canvas.width = rectangle.width;
   // canvas.height = rectangle.height;
   // const ctx = canvas.getContext("2d")!;
 
   const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
-  const ctx = canvas.getContext('2d');
-  ctx?.drawImage(img, rectangle.left, rectangle.top, rectangle.width, rectangle.height)
+  const ctx = canvas.getContext("2d");
+  ctx?.drawImage(
+    image,
+    rectangle.left,
+    rectangle.top,
+    rectangle.width,
+    rectangle.height,
+  );
 
   return canvas;
 
@@ -39,12 +45,9 @@ const cropRegion = async (img: OffscreenCanvas, rectangle: Rectangle) => {
 };
 
 const scanSingleImage = async (region: ScanRegions) => {
-  const canvas = new OffscreenCanvas(
-    region.image.data.width,
-    region.image.data.height,
-  );
+  const canvas = new OffscreenCanvas(region.image.width, region.image.height);
   const ctx = canvas.getContext("bitmaprenderer");
-  ctx?.transferFromImageBitmap(region.image.data);
+  ctx?.transferFromImageBitmap(region.image);
 
   const rects = await Promise.all(
     [

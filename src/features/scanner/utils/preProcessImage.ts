@@ -25,15 +25,16 @@ const tensorFromBitmap = async (image: ImageBitmap) => {
 };
 
 const gammaProcess = async (
-  image: SerializedImage,
-): Promise<SerializedImage> => {
-  const { height, width } = image.data;
+  image: ImageBitmap,
+  hash: string,
+) => {
+  const { height, width } = image;
   const newWidth = 1920;
   const newHeight = Math.round((height * 1920) / width);
 
   const bitmapCanvas = new OffscreenCanvas(width, height);
   const bitmapCtx = bitmapCanvas.getContext("bitmaprenderer");
-  bitmapCtx?.transferFromImageBitmap(image.data);
+  bitmapCtx?.transferFromImageBitmap(image);
 
   const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext("2d");
@@ -74,19 +75,19 @@ const gammaProcess = async (
 
   const imageBitmap = await createImageBitmap(outputCanvas);
 
-  return { hash: image.hash, data: imageBitmap } satisfies SerializedImage;
+  return { hash: hash, data: imageBitmap };
 };
 
-function getRectangle(bbox: bbox, image: SerializedImage): Rectangle {
+function getRectangle(bbox: bbox, image: ImageBitmap): Rectangle {
   return {
-    top: bbox.TOP_RATIO * image.data.height,
-    left: bbox.LEFT_RATIO * image.data.width,
-    width: bbox.WIDTH_RATIO * image.data.width,
-    height: bbox.HEIGHT_RATIO * image.data.height,
+    top: bbox.TOP_RATIO * image.height,
+    left: bbox.LEFT_RATIO * image.width,
+    width: bbox.WIDTH_RATIO * image.width,
+    height: bbox.HEIGHT_RATIO * image.height,
   };
 }
 
-function calcRegions(image: SerializedImage): ScanRegions {
+function calcRegions(image: ImageBitmap, hash: string): ScanRegions {
   const pageRectangle = getRectangle(PAGE_COUNT_BBOX, image);
   const itemNameRectangle = getRectangle(ITEM_NAME_BBOX, image);
   const typeRectangle = getRectangle(WISH_TYPE_BBOX, image);
@@ -103,16 +104,16 @@ function calcRegions(image: SerializedImage): ScanRegions {
   } satisfies ScanRegions;
 }
 
-async function preProcessImage(image: SerializedImage): Promise<ScanRegions> {
-  const output = await gammaProcess(image);
+async function preProcessImage(image: ImageBitmap, hash: string): Promise<ScanRegions> {
+  const output = await gammaProcess(image, hash);
 
   // output.dataset.hash = hash;
 
   if (!output) throw new Error("No offset found. Couldn't process image");
-  // log("processing", output);
+  log("processing", output);
 
-  const region = calcRegions(output);
-  // log("region", region);
+  const region = calcRegions(output.data, output.hash);
+  log("region", region);
   // TODO: Implement diffing based scan
 
   return region;
