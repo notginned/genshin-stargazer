@@ -1,14 +1,24 @@
 import type { Images, ProcessedImages } from "../../../types/State.type";
 import { logDebug } from "../../../utils/lib";
+import { processHistory } from "../../dataParser/processHistory";
 import { preProcessImage } from "./preProcessImage";
 import type { ScanRegions } from "./scan.types";
+import { scanImages } from "./scanImages";
 
 self.onmessage = async (e: MessageEvent) => {
-  const { type, images, processedImages } = e.data;
   // console.log("worker", { type, images, processedImages });
-  const result = await startProcessing(images, processedImages);
-  console.log('inside worker', result);
-  postMessage(result);
+  const { type } = e.data;
+  switch (type) {
+    case "process": {
+      const { images, processedImages } = e.data;
+      const scanQueue = await startProcessing(images, processedImages);
+      console.log("inside worker", { scanQueue });
+
+      const result = await startScan(Object.values(scanQueue));
+      console.log("inside worker result", { result });
+      return postMessage(result);
+    }
+  }
 };
 
 async function startProcessing(
@@ -78,4 +88,15 @@ async function startProcessing(
   //   ...result,
   // }));
   // setImages({});
+}
+
+async function startScan(queue: ScanRegions[]) {
+  const scanResults = await scanImages(queue);
+
+  if (scanResults.some((r) => r.itemName.length === 0)) {
+    throw new Error("Could not scan image");
+  }
+
+  const newHistory = processHistory(scanResults);
+  return newHistory;
 }

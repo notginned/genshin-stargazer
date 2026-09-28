@@ -275,7 +275,7 @@ function Scanner({
   const handleWorkerClick = async () => {
     if (isScanning) return;
 
-    workerRef.current?.postMessage({ type: "scan", images, processedImages });
+    workerRef.current?.postMessage({ type: "process", images, processedImages });
   };
 
   return (

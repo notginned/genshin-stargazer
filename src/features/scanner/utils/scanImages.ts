@@ -1,4 +1,5 @@
 // import { PaddleOCR } from "@paddleocr/paddleocr-js";
+import type { SerializedImage } from "../../../types/DeserializedImage";
 import { logDebug } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
@@ -16,33 +17,27 @@ export const service = new PaddleOcrService({
   },
 });
 
-const cropRegion = (img: HTMLCanvasElement, rectangle: Rectangle) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = rectangle.width;
-  canvas.height = rectangle.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(
-    img,
-    rectangle.left,
-    rectangle.top,
-    rectangle.width,
-    rectangle.height, // Destination canvas
-    0,
-    0,
-    rectangle.width,
-    rectangle.height, // Destination canvas
-  );
+const cropRegion = async (img: SerializedImage, rectangle: Rectangle) => {
+  // const canvas = document.createElement("canvas");
+  // canvas.width = rectangle.width;
+  // canvas.height = rectangle.height;
+  // const ctx = canvas.getContext("2d")!;
+  const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
+  const ctx = canvas.getContext("bitmaprenderer");
+  ctx?.transferFromImageBitmap(img.data);
 
   return canvas;
 };
 
 const scanSingleImage = async (region: ScanRegions) => {
-  const canvases = [
-    region.rectangles.itemNameRectangle,
-    region.rectangles.typeRectangle,
-    region.rectangles.timeRectangle,
-    region.rectangles.pageRectangle,
-  ].map((r) => cropRegion(region.image, r));
+  const canvases = await Promise.all(
+    [
+      region.rectangles.itemNameRectangle,
+      region.rectangles.typeRectangle,
+      region.rectangles.timeRectangle,
+      region.rectangles.pageRectangle,
+    ].map((r) => cropRegion(region.image, r)),
+  );
 
   await service.initialize();
   const rps = await service.batchRecognize(canvases);
