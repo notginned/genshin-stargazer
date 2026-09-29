@@ -1,19 +1,23 @@
 // import { PaddleOCR } from "@paddleocr/paddleocr-js";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
-import { PaddleOcrService } from "ppu-paddle-ocr/web";
+import { ocr, PaddleOcrService } from "ppu-paddle-ocr/web";
 
-export const service = new PaddleOcrService({
-  debugging: {
-    debug: false,
-    verbose: false,
-  },
-  session: {
-    executionMode: "parallel",
-    // Removing other backends breaks parallel processing for some reason??
-    executionProviders: ["wasm", "webgpu", "cpu", "cuda"],
-  },
-});
+export const service = () => {
+  new PaddleOcrService({
+    debugging: {
+      debug: false,
+      verbose: false,
+    },
+
+    session: {
+      graphOptimizationLevel: "disabled",
+      // executionMode: "parallel",
+      // Removing other backends breaks parallel processing for some reason??
+      // executionProviders: ["wasm", "webgpu", "cpu", "cuda"],
+    },
+  });
+};
 
 const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
   const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
@@ -47,9 +51,9 @@ export const scanSingleImage = async (region: ScanRegions) => {
     ].map((r) => cropRegion(canvas, r)),
   );
 
-  await service.initialize();
-  const rps = await service.batchRecognize(rects);
-  await service.destroy();
+  // const rps = await service.batchRecognize(rects);
+  const rps = await Promise.all(rects.map(r => ocr(r)))
+
   const res = {
     itemName: rps[0].text,
     wishType: rps[1].text,
@@ -74,6 +78,7 @@ export async function scanImages(
       return scanRes;
     }),
   );
+  // await service.destroy();
   const filtered = Object.values(
     res.reduceRight<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
       acc[cur.pageNumber] = cur;

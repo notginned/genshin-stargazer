@@ -1,16 +1,13 @@
 import type { Images } from "../../../types/State.type";
-import type { ServerMessage, WorkerMessage } from "../../../types/WorkerMessage";
+import type {
+  ServerMessage,
+  WorkerMessage,
+} from "../../../types/WorkerMessage";
 import { logError } from "../../../utils/lib";
 import { processHistory } from "../../dataParser/processHistory";
 import { preprocessImages } from "./preProcessImage";
 import type { ScanRegions } from "./scan.types";
-import { scanImages, service } from "./scanImages";
-
-const serviceLoaded = async () => {
-  await service.initialize();
-  await service.destroy();
-  return true;
-};
+import { scanImages } from "./scanImages";
 
 const sendMessage = (message: WorkerMessage) => {
   self.postMessage(message);
@@ -22,8 +19,6 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
     const { type } = e.data;
     switch (type) {
       case "process": {
-        // Warming up the service
-        await serviceLoaded();
         // log("From worker", e.data);
         const images = e.data.images;
         // const scannedImages = e.data.scannedImages;
