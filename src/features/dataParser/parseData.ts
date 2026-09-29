@@ -98,6 +98,14 @@ function parseDate(timestamp: number) {
   return `${date} ${time}`;
 }
 
+function dateFromTimeString(time: string) {
+  return new Date(
+    time.substring(0, 10).replaceAll(/[^\d]/g, "/") +
+      " " +
+      time.substring(10).replaceAll(/[^\d]/g, ":"),
+  ).valueOf();
+}
+
 function parseScanResults(data: ScanResult): Wish[] {
   const pageNumber = Number(data.pageNumber?.replaceAll(/[^0-9]/g, ""));
 
@@ -109,13 +117,11 @@ function parseScanResults(data: ScanResult): Wish[] {
 
   // First 10 characters are YY-MM-DD
   // Rest are hh:mm:ss
+  // Replace non digits with proper separators
+  // the date constructor takes care of any missing values accurately
   const timeReceived = prepareColumn(data.timeReceived, "Time Received", 5).map(
-    (time) =>
-      new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf(),
+    dateFromTimeString,
   );
-
-  // log("cols", {itemNamesCol, wishTypesCol, timeReceived})
-  // log("sanitized", {itemNames, wishTypes, timeReceived})
 
   const wishes = itemNames.map<Wish>((itemName, i) => {
     return {
@@ -128,7 +134,6 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
-  // logDebug("wish", wishes);
   return wishes;
 }
 
