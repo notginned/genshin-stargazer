@@ -26,14 +26,22 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
 
         const arr = Object.values(images);
         const processedHashes = Object.keys(images);
-        let counter = 0.25;
-        const total = arr.length + 0.25;
+        let counter = 0;
+        const total = arr.length * 3;
 
-        const preprocessed = await preprocessImages(arr);
-        sendMessage({ type: "progress", value: 0.25 });
+        // More weight to scanning because it's slower
+        const preprocessed = await preprocessImages(arr, () => {
+          sendMessage({
+            type: "progress",
+            value: (counter = counter + 1) / total,
+          });
+        });
 
         const newHistory = await startScan(preprocessed, () =>
-          sendMessage({ type: "progress", value: ++counter / total }),
+          sendMessage({
+            type: "progress",
+            value: (counter = counter + 2) / total,
+          }),
         );
 
         // log("From worker", newHistory);

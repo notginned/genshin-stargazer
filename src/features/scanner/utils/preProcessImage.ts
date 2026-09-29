@@ -10,36 +10,20 @@ import { log } from "../../../utils/lib.ts";
 import { Operation } from "gammacv";
 import * as gm from "gammacv";
 import type { SerializedImage } from "../../../types/DeserializedImage.ts";
-import type { Images } from "../../../types/State.type.ts";
-
-const tensorFromBitmap = async (image: ImageBitmap) => {
-  const { width, height } = image;
-  const canvas = new OffscreenCanvas(width, height);
-  const ctx = canvas.getContext("2d");
-  if (ctx === null) throw new Error("Couldnt create tensor");
-
-  ctx.drawImage(image, width, height);
-  const data = ctx?.getImageData(0, 0, width, height);
-  const tensorData = new Uint8Array(data.data.buffer);
-
-  return new gm.Tensor("uint8", [height, width, 4], tensorData);
-};
 
 const gammaProcess = async (image: ImageBitmap, hash: string) => {
   const { height, width } = image;
+
   const newWidth = 1920;
   const newHeight = Math.round((height * 1920) / width);
 
-  const bitmapCanvas = new OffscreenCanvas(width, height);
-  const bitmapCtx = bitmapCanvas.getContext("bitmaprenderer");
-  bitmapCtx?.transferFromImageBitmap(image);
-
   const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext("2d");
-  ctx?.drawImage(bitmapCanvas, 0, 0);
+  ctx?.drawImage(image, 0, 0, image.width, image.height);
 
   const input = new gm.Tensor("uint8", [height, width, 4]);
 
+  // OffscreenCanvas works just fine
   // @ts-expect-error
   gm.canvasToTensor(canvas, input);
 
@@ -47,6 +31,7 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
   whiteTensor.data.fill(255);
 
   let pipeline: typeof input | Operation = input;
+
   pipeline = gm.resize(pipeline, newWidth, newHeight, "bicubic");
   pipeline = gm.gaussianBlur(pipeline, 3, 1);
   pipeline = gm.grayscale(pipeline);
@@ -54,20 +39,18 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
   pipeline = gm.erode(pipeline, [1, 1]);
   pipeline = gm.dilate(pipeline, [2, 2]);
   pipeline = gm.sub(whiteTensor, pipeline);
-  const output = gm.tensorFrom(pipeline);
 
+  const output = gm.tensorFrom(pipeline);
   if (output === null) {
     throw new Error("Error procesing");
   }
 
   const sess = new gm.Session();
   sess.init(pipeline);
-
   sess.runOp(pipeline, 0, output);
 
-  // log(output.data);
-
   const outputCanvas = new OffscreenCanvas(newWidth, newHeight);
+  // OffscreenCanvas works just fine
   // @ts-expect-error
   gm.canvasFromTensor(outputCanvas, output);
 
@@ -112,13 +95,9 @@ async function preprocessSingleImage(
 ): Promise<ScanRegions> {
   const output = await gammaProcess(image, hash);
 
-  // output.dataset.hash = hash;
-
   if (!output) throw new Error("No offset found. Couldn't process image");
-  // log("processing", output);
 
   const region = calcRegions(output.data, output.hash);
-  // log("region", region);
   // TODO: Implement diffing based scan
 
   return region;
@@ -126,15 +105,15 @@ async function preprocessSingleImage(
 
 async function preprocessImages(
   images: SerializedImage[],
-  callback?: (idx: number) => void,
+  callback?: (region: ScanRegions, idx: number) => void,
 ): Promise<ScanRegions[]> {
   const res = await Promise.all(
     images.map(async (img, idx) => {
       const bitmap = await createImageBitmap(img.file);
-      const processed = await preprocessSingleImage(bitmap, img.hash);
+      const region = await preprocessSingleImage(bitmap, img.hash);
 
-      if (callback) callback(idx);
-      return processed;
+      if (callback) callback(region, idx);
+      return region;
     }),
   );
   return res;
