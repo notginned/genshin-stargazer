@@ -13,17 +13,17 @@ const serviceLoaded = async () => {
 
 self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
   // console.log("worker", { type, images, processedImages });
-  const { type } = e.data;
-  switch (type) {
-    case "process": {
-      // Warming up the service
-      await serviceLoaded();
-      // log("From worker", e.data);
-      const images = e.data.images;
+  try {
+    const { type } = e.data;
+    switch (type) {
+      case "process": {
+        // Warming up the service
+        await serviceLoaded();
+        // log("From worker", e.data);
+        const images = e.data.images;
 
-      // Cannot use a cache because the Bitmaps get consumed upon scanning
-      // plus processing is cheap anyways
-      try {
+        // Cannot use a cache because the Bitmaps get consumed upon scanning
+        // plus processing is cheap anyways
         const arr = Object.values(images);
         let counter = 0;
         const total = arr.length * 2;
@@ -36,11 +36,11 @@ self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
 
         // log("From worker", newHistory);
         self.postMessage({ type: "result", newHistory });
-      } catch (error) {
-        self.postMessage({ type: "error", error });
+        break;
       }
-      break;
     }
+  } catch (error) {
+    self.postMessage({ type: "error", error });
   }
 };
 

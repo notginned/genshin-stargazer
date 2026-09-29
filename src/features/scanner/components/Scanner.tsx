@@ -128,6 +128,8 @@ function Scanner({
           break;
         }
         case "error": {
+          const error = new Error(e.data.error);
+          setError(error);
           setIsScanning(false);
         }
       }
