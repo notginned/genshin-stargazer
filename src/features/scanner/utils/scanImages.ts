@@ -1,6 +1,4 @@
 // import { PaddleOCR } from "@paddleocr/paddleocr-js";
-import type { SerializedImage } from "../../../types/DeserializedImage";
-import { logDebug } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { PaddleOcrService } from "ppu-paddle-ocr/web";
@@ -18,19 +16,14 @@ export const service = new PaddleOcrService({
 });
 
 const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
-  // const canvas = document.createElement("canvas");
-  // canvas.width = rectangle.width;
-  // canvas.height = rectangle.height;
-  // const ctx = canvas.getContext("2d")!;
-
   const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
   const ctx = canvas.getContext("2d");
   ctx?.drawImage(
-    image,
-    rectangle.left, // source xstart
-    rectangle.top, // source ystart
-    rectangle.width, // width of crop
-    rectangle.height, // height of crop
+    image, // source image
+    rectangle.left, // source start x
+    rectangle.top, // source start y
+    rectangle.width, // crop width
+    rectangle.height, // crop height
     0, // dest start x
     0, // dest start y
     rectangle.width, // dest width
@@ -38,14 +31,6 @@ const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
   );
 
   return canvas;
-
-  // return createImageBitmap(
-  //   img.data,
-  //   rectangle.left,
-  //   rectangle.top,
-  //   rectangle.width,
-  //   rectangle.height,
-  // );
 };
 
 export const scanSingleImage = async (region: ScanRegions) => {
@@ -83,10 +68,10 @@ export async function scanImages(
 ): Promise<ScanResult[]> {
   const res = await Promise.all(
     regions.map(async (region) => {
-      return scanSingleImage(region).then(res => {
-        if (callback) callback();
-        return res;
-      });
+      const scanRes = await scanSingleImage(region);
+      if (callback) callback();
+
+      return scanRes;
     }),
   );
   const filtered = Object.values(

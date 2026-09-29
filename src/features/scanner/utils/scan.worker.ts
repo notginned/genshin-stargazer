@@ -1,5 +1,6 @@
 import type { Images } from "../../../types/State.type";
-import { log } from "../../../utils/lib";
+import type { ServerMessage, WorkerMessage } from "../../../types/WorkerMessage";
+import { logError } from "../../../utils/lib";
 import { processHistory } from "../../dataParser/processHistory";
 import { preprocessImages } from "./preProcessImage";
 import type { ScanRegions } from "./scan.types";
@@ -11,7 +12,11 @@ const serviceLoaded = async () => {
   return true;
 };
 
-self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
+const sendMessage = (message: WorkerMessage) => {
+  self.postMessage(message);
+};
+
+self.onmessage = async (e: MessageEvent<ServerMessage>) => {
   // console.log("worker", { type, images, processedImages });
   try {
     const { type } = e.data;
@@ -21,26 +26,34 @@ self.onmessage = async (e: MessageEvent<{ type: string; images: Images }>) => {
         await serviceLoaded();
         // log("From worker", e.data);
         const images = e.data.images;
+        // const scannedImages = e.data.scannedImages;
+        // TODO: Remove previously scanned images
 
         // Cannot use a cache because the Bitmaps get consumed upon scanning
         // plus processing is cheap anyways
         const arr = Object.values(images);
+        const processedHashes = Object.keys(images);
         let counter = 0;
         const total = arr.length * 2;
+
         const preprocessed = await preprocessImages(arr, () =>
-          postMessage({ type: "progress", value: ++counter / total }),
+          sendMessage({ type: "progress", value: ++counter / total }),
         );
         const newHistory = await startScan(preprocessed, () =>
-          postMessage({ type: "progress", value: ++counter / total }),
+          sendMessage({ type: "progress", value: ++counter / total }),
         );
 
         // log("From worker", newHistory);
-        self.postMessage({ type: "result", newHistory });
+        sendMessage({ type: "result", newHistory, processedHashes });
         break;
       }
     }
   } catch (error) {
-    self.postMessage({ type: "error", error });
+    if (!(error instanceof Error)) {
+      logError(error);
+      return;
+    }
+    sendMessage({ type: "error", error: error.message });
   }
 };
 

@@ -1,5 +1,3 @@
-import type { SerializedImage } from "../../../types/DeserializedImage";
-
 export interface Rectangle {
   top: number;
   left: number;

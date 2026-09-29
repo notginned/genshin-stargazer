@@ -1,81 +1,35 @@
 import {
-  use,
   useEffect,
   useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { scanImages, scanSingleImage, service } from "../utils/scanImages.ts";
 import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 // import { preProcessImage } from "../utils/preProcessImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
-import type {
-  Images,
-  ProcessedImages,
-  ScannedImages,
-} from "../../../types/State.type.ts";
+import type { Images, ScannedImages } from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
-import { isNull, log, logDebug } from "../../../utils/lib.ts";
+import { isNull } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
-import type { Rectangle, ScanRegions } from "../utils/scan.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
-
-const colors = [
-  "#FF5733", // Bright Red-Orange
-  "#FFBD33", // Bright Yellow-Orange
-  "#DBFF33", // Bright Lime
-  "#75FF33", // Neon Green
-  "#33FF57", // Bright Green
-  "#33FFBD", // Bright Aqua
-  "#33DBFF", // Bright Sky Blue
-  "#3375FF", // Bright Blue
-  "#5733FF", // Bright Indigo
-  "#BD33FF", // Bright Violet
-  "#FF33DB", // Bright Pink-Magenta
-  "#FF3375", // Bright Hot Pink
-];
-
-function genRandomColor() {
-  const color = colors[Math.round(Math.random() * (colors.length - 1))];
-  return color;
-}
-
-function drawBoxes(canvasEl: HTMLCanvasElement, rectangles: Rectangle[]) {
-  const ctx = canvasEl.getContext("2d");
-  if (!ctx) return;
-
-  rectangles.forEach(({ top, left, height, width }) => {
-    const newCol = genRandomColor();
-    ctx.strokeStyle = newCol;
-    ctx.rect(left, top, width, height);
-    ctx.stroke();
-  });
-}
+import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
 
 interface ScannerProps {
   images: Images;
   setImages: Dispatch<SetStateAction<Images>>;
-  processedImages: ProcessedImages;
-  setProcessedImages: Dispatch<SetStateAction<ProcessedImages>>;
   saveHistory: (newHistory: WishHistory) => void;
 }
 
-function Scanner({
-  images,
-  setImages,
-  processedImages,
-  setProcessedImages,
-  saveHistory,
-}: ScannerProps) {
+function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
   const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
   const progressRef = useRef<Nullable<HTMLProgressElement>>(null);
-  const [_scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
+  const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
     "scannedImages",
     {},
   );
@@ -93,18 +47,6 @@ function Scanner({
 
   const handleErrorModalClose = () => {
     if (!error) return;
-    if (!(error instanceof ImageError)) {
-      clearScanQueue();
-      setError(() => null);
-      return;
-    }
-
-    setProcessedImages((prevImages) => {
-      const newImages = { ...prevImages };
-      delete newImages[error.image.id];
-      return newImages;
-    });
-    clearScanQueue();
     setError(() => null);
   };
 
@@ -115,11 +57,36 @@ function Scanner({
       new URL("../utils/scan.worker.ts", import.meta.url),
       { type: "module" },
     );
-    worker.addEventListener("message", (e: MessageEvent) => {
+    worker.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
       console.log("reply from worker", e.data);
       switch (e.data.type) {
         case "result": {
           console.log(e.data);
+          const newHistory = e.data.newHistory;
+          const processedHashes = e.data.processedHashes;
+
+          // Saving history to browser storage
+          saveHistory(newHistory);
+
+          // Showing the modal with scan results
+          setScanResultTable(newHistory);
+
+          // Set scanned images only after data state is set
+          // to avoid inconsistent cache
+          setScannedImages((oldImages) => ({
+            ...oldImages,
+            // Reducing our array of newly scanned images into a object of hashes
+            ...processedHashes.reduce<{ [hash: string]: boolean }>(
+              (acc, cur) => {
+                acc[cur] = true;
+                return acc;
+              },
+              {},
+            ),
+          }));
+
+          resultsModalRef.current?.show();
+
           setIsScanning(false);
           break;
         }
@@ -186,7 +153,7 @@ function Scanner({
     workerRef.current?.postMessage({
       type: "process",
       images,
-      processedImages,
+      scannedImages,
     });
   };
 
@@ -198,7 +165,7 @@ function Scanner({
           className="btn btn-scan"
           onClick={handleWorkerClick}
         >
-          {isEmpty(processedImages) ? "Process" : "Scan"} Images
+          {!isEmpty(images) ? "Process" : "Scan"} Images
         </button>
       )}
       {isScanning && <progress ref={progressRef} value="0" max="1" />}

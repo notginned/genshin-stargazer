@@ -128,10 +128,9 @@ async function preprocessImages(
   const res = await Promise.all(
     images.map(async (img, idx) => {
       const bitmap = await createImageBitmap(img.file);
-      const processed = preprocessSingleImage(bitmap, img.hash).then(region => {
-        if (callback) callback(idx);
-        return region;
-      });
+      const processed = await preprocessSingleImage(bitmap, img.hash);
+
+      if (callback) callback(idx);
       return processed;
     }),
   );
