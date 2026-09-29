@@ -26,10 +26,10 @@ const TIME_RECEIVED_BBOX: bbox = {
 };
 
 const PAGE_COUNT_BBOX: bbox = {
-  TOP_RATIO: 0.79,
+  TOP_RATIO: 0.59,
   LEFT_RATIO: 0.46,
   WIDTH_RATIO: 0.060,
-  HEIGHT_RATIO: 0.070,
+  HEIGHT_RATIO: 0.470,
 };
 
 export {

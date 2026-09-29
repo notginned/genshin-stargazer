@@ -1,13 +1,21 @@
 import { BKTree } from "../../utils/BKTree.ts";
 import type { ScanResult } from "../scanner/utils/scan.types.ts";
 import type { Wish } from "../../types/Wish.types.ts";
-import { headersDict, itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
+import {
+  headersDict,
+  itemNamesDict,
+  wishTypesDict,
+} from "./config/dictionaries.ts";
 import { log, logDebug } from "../../utils/lib.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;
 
-function correctName(name: string, tree: BKTree, tolerance: number): [string, number] {
+function correctName(
+  name: string,
+  tree: BKTree,
+  tolerance: number,
+): [string, number] {
   const [result, distance] = tree
     // More tolerant towards longer strings
     .search(name, Math.ceil(name.length / tolerance))
@@ -16,15 +24,28 @@ function correctName(name: string, tree: BKTree, tolerance: number): [string, nu
   return [result, distance];
 }
 
-function prepareColumn(data: string, header: string, tolerance: number): string[] {
-  const splitted = data.split('\n');
+function prepareColumn(
+  data: string,
+  header: string,
+  tolerance: number,
+): string[] {
+  const splitted = data.split("\n");
   // Excluding the searched header
-  const items = splitted.slice(1 + splitted.findIndex(x => header === correctName(x, headersDict, tolerance)[0]));
+  const items = splitted.slice(
+    1 +
+      splitted.findIndex(
+        (x) => header === correctName(x, headersDict, tolerance)[0],
+      ),
+  );
 
   return items;
 }
 
-function sanitizeSingleItem(name: string, dict: BKTree, tolerance: number): [string, number] {
+function sanitizeSingleItem(
+  name: string,
+  dict: BKTree,
+  tolerance: number,
+): [string, number] {
   const cleaned = name?.trim().replace(rarityRegex, "").trim();
 
   if (!cleaned) return [cleaned, Infinity];
@@ -49,7 +70,7 @@ function sanitizeItems(items: string[], dict: BKTree, tolerance = 5) {
     const [joined, joinedDistance] = sanitizeSingleItem(
       cleaned + " " + items[i + 1]?.trim(),
       dict,
-      tolerance
+      tolerance,
     );
 
     if (joinedDistance <= 2) {
@@ -67,18 +88,18 @@ function pad(n: number, maxLength = 2, fillString = "0"): string {
 function parseDate(timestamp: number) {
   const dateObj = new Date(timestamp);
   const date = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(
-    dateObj.getDate()
+    dateObj.getDate(),
   )}`;
 
   const time = `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(
-    dateObj.getSeconds()
+    dateObj.getSeconds(),
   )}`;
 
   return `${date} ${time}`;
 }
 
 function parseScanResults(data: ScanResult): Wish[] {
-  const pageNumber = Number(data.pageNumber[0]?.trim());
+  const pageNumber = Number(data.pageNumber?.replaceAll(/[^0-9]/g, ""));
 
   const itemNamesCol = prepareColumn(data.itemName, "Item Name", 5);
   const itemNames = sanitizeItems(itemNamesCol, itemNamesDict);
@@ -90,12 +111,11 @@ function parseScanResults(data: ScanResult): Wish[] {
   // Rest are hh:mm:ss
   const timeReceived = prepareColumn(data.timeReceived, "Time Received", 5).map(
     (time) =>
-      new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf()
+      new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf(),
   );
 
   // log("cols", {itemNamesCol, wishTypesCol, timeReceived})
   // log("sanitized", {itemNames, wishTypes, timeReceived})
-
 
   const wishes = itemNames.map<Wish>((itemName, i) => {
     return {
