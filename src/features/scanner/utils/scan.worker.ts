@@ -1,4 +1,4 @@
-import type { Images } from "../../../types/State.type";
+import { type ScannedImages } from "../../../types/State.type";
 import type {
   ServerMessage,
   WorkerMessage,
@@ -24,13 +24,20 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
         // const scannedImages = e.data.scannedImages;
         // TODO: Remove previously scanned images
 
-        const arr = Object.values(images);
-        const processedHashes = Object.keys(images);
+        const raws = Object.values(images);
+        const scannedHashes = Object.keys(images).reduce<ScannedImages>(
+          (acc, cur) => {
+            acc[cur] = true;
+            return acc;
+          },
+          {},
+        );
+
         let counter = 0;
-        const total = arr.length * 3;
+        const total = raws.length * 3;
 
         // More weight to scanning because it's slower
-        const preprocessed = await preprocessImages(arr, () => {
+        const preprocessed = await preprocessImages(raws, () => {
           sendMessage({
             type: "progress",
             value: (counter = counter + 1) / total,
@@ -45,7 +52,7 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
         );
 
         // log("From worker", newHistory);
-        sendMessage({ type: "result", newHistory, processedHashes });
+        sendMessage({ type: "result", newHistory, scannedHashes });
         break;
       }
     }

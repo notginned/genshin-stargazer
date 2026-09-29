@@ -9,7 +9,7 @@ import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type { Images, ProcessedImages} from "./types/State.type.ts";
+import type { Images, ProcessedImages } from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -19,28 +19,27 @@ import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
 import { FilePicker } from "./features/FilePicker/FilePicker.tsx";
 
 function App() {
-  function saveHistory(newHistory: WishHistory) {
-    setHistory((prevHistory) => mergeHistories(prevHistory, newHistory));
-  }
-
-  function handleClearHistory() {
-    if (isNull(clearHistoryDialogRef.current)) return;
-    localStorage.clear();
-    clearHistoryDialogRef.current.close();
-    window.location.reload();
-  }
   const [history, setHistory] = useLocalStorage<WishHistory>(
     "history",
     createEmptyWishHistory(),
   );
 
   const [images, setImages] = useState<Images>({});
-  const [processedImages, setProcessedImages] = useState<ProcessedImages>({});
-
+  const [isScanning, setIsScanning] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState("character_event_wish");
-
   const tablesRef = useRef<EventToTable>(null);
   const clearHistoryDialogRef = useRef<HTMLDialogElement>(null);
+
+  const saveHistory = (newHistory: WishHistory) => {
+    setHistory((prevHistory) => mergeHistories(prevHistory, newHistory));
+  };
+
+  const handleClearHistory = () => {
+    if (isNull(clearHistoryDialogRef.current)) return;
+    localStorage.clear();
+    clearHistoryDialogRef.current.close();
+    window.location.reload();
+  };
 
   const getTables = () => {
     if (isNull(tablesRef.current)) {
@@ -63,6 +62,9 @@ function App() {
           </h1>
 
           <div className="toolbar">
+            {!isScanning && (
+              <FilePicker images={images} setImages={setImages} />
+            )}
             <button
               className="btn btn-export"
               onClick={() => generateSheet(tablesRef.current)}
@@ -78,12 +80,11 @@ function App() {
                 </div>
               }
             >
-              <FilePicker images={images} setImages={setImages} />
               <Scanner
                 images={images}
+                isScanning={isScanning}
+                setIsScanning={setIsScanning}
                 setImages={setImages}
-                processedImages={processedImages}
-                setProcessedImages={setProcessedImages}
                 saveHistory={saveHistory}
               />
             </Suspense>
@@ -104,7 +105,8 @@ function App() {
             >
               {Object.keys(history).map((event) => (
                 <option key={event} value={event}>
-                  {event.split("_").join(" ")} ({history[event].length})
+                  {event.split("_").join(" ")} (
+                  {history[event as keyof WishHistory].length})
                 </option>
               ))}
             </select>
