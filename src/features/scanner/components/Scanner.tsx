@@ -13,7 +13,7 @@ import type { Images, ScannedImages } from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
-import { isNull } from "../../../utils/lib.ts";
+import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
 import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
@@ -45,17 +45,10 @@ function Scanner({
     "scannedImages",
     {},
   );
-  // logDebug("processedImages", processedImages);
-  // logDebug("scannedImages", scannedImages);
 
   const [scanResultTable, setScanResultTable] =
     useState<Nullable<WishHistory>>(null);
   const resultsModalRef = useRef<Nullable<HTMLDialogElement>>(null);
-
-  const clearScanQueue = () => {
-    setIsScanning(false);
-    setImages({});
-  };
 
   const handleErrorModalClose = () => {
     if (!error) return;
@@ -70,10 +63,9 @@ function Scanner({
       { type: "module" },
     );
     worker.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
-      console.log("reply from worker", e.data);
       switch (e.data.type) {
         case "result": {
-          console.log(e.data);
+          logDebug("reply from worker", e.data);
           const newHistory = e.data.newHistory;
           const scannedHashes = e.data.scannedHashes;
 
@@ -89,11 +81,11 @@ function Scanner({
             ...oldImages,
             ...scannedHashes,
           }));
-          setImages({});
 
           resultsModalRef.current?.show();
-
+          setImages({});
           setIsScanning(false);
+
           break;
         }
         case "progress": {
@@ -115,29 +107,33 @@ function Scanner({
     workerRef.current = worker;
   }, [setIsScanning, saveHistory, setScannedImages, setImages]);
 
-  const handleClick = async () => {
-    const processed = await preprocessImages(Object.values(images));
-    const canvases = await getDebugImages(processed);
-
-    document.querySelector("main")?.append(...canvases);
-
-    console.log("scanning");
-    const res = await scanImages(processed);
-    console.log(res);
-    // const res = await scanImages(processed, (result) => console.log(result))
-    // console.log(res);
-    // console.timeEnd();
-
-    // const res = service.recognize(, options)
-  };
+  // Only there for debug purposes
+  //   const handleClick = async () => {
+  //     const processed = await preprocessImages(Object.values(images));
+  //     const canvases = await getDebugImages(processed);
+  //
+  //     document.querySelector("main")?.append(...canvases);
+  //
+  //     console.log("scanning");
+  //     const res = await scanImages(processed);
+  //     console.log(res);
+  //     // const res = await scanImages(processed, (result) => console.log(result))
+  //     // console.log(res);
+  //     // console.timeEnd();
+  //
+  //     // const res = service.recognize(, options)
+  //   };
 
   const handleWorkerClick = async () => {
     if (isScanning) return;
     const newImages = objectDifference(images, scannedImages);
     if (isEmpty(newImages)) setImages({});
+    if (isNull(workerRef.current)) {
+      return setError(new Error("Could not create worker"));
+    }
 
     setIsScanning(true);
-    workerRef.current?.postMessage({
+    workerRef.current.postMessage({
       type: "process",
       images: newImages,
       scannedImages,
@@ -167,7 +163,9 @@ function Scanner({
         <p>There was an error processing the image</p>
         {!isNull(error) && <p>{error.message}</p>}
         <p>Please retry</p>
-        <canvas ref={errorCanvasRef} className="error-image" />
+        {error instanceof ImageError && (
+          <canvas ref={errorCanvasRef} className="error-image" />
+        )}
         <div className="error-modal-btn-wrapper">
           <button
             className="btn"
