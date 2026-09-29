@@ -48,6 +48,7 @@ export const scanSingleImage = async (region: ScanRegions) => {
     ].map((r) => cropRegion(canvas, r)),
   );
 
+  // Concurrency is a lie
   const rps = await service.batchRecognize(rects, { concurrency: 1 });
   // const rps = await Promise.all(rects.map((r) => ocr(r)));
 
@@ -57,8 +58,6 @@ export const scanSingleImage = async (region: ScanRegions) => {
     timeReceived: rps[2].text,
     pageNumber: rps[3].text,
   } satisfies ScanResult;
-
-  // logDebug("res", res);
 
   return res;
 };
@@ -95,6 +94,8 @@ export async function scanImages(
 
     return res;
   } catch (e) {
-    throw new Error("Was not able to scan an image");
+    if (!(e instanceof Error)) throw new Error("Unable to scan an image");
+
+    throw new Error(`Unable able to scan an image: ${e.message}`);
   }
 }

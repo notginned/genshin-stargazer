@@ -138,7 +138,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   return (
     <>
       {!isEmpty(images) && !isScanning && (
-        <button type="button" className="btn btn-scan" onClick={handleClick}>
+        <button type="button" className="btn btn-scan" onClick={handleWorkerClick}>
           {!isEmpty(images) ? "Process" : "Scan"} Images
         </button>
       )}
