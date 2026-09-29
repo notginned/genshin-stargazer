@@ -3,6 +3,7 @@ import type {
   ServerMessage,
   WorkerMessage,
 } from "../../../types/WorkerMessage";
+import { ImageError } from "../../../utils/ImageError";
 import { logError } from "../../../utils/lib";
 import { processHistory } from "../../dataParser/processHistory";
 import { preprocessImages } from "./preProcessImage";
@@ -61,7 +62,8 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
       logError(error);
       return;
     }
-    sendMessage({ type: "error", error: error.message });
+    if (error instanceof ImageError)
+    sendMessage({ type: "error", error: error.message, image: error.image });
   }
 };
 

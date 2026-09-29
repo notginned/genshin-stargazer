@@ -1,7 +1,7 @@
 export class ImageError extends Error {
-  image: HTMLImageElement;
+  image: ImageBitmap;
 
-  constructor(message: string, image: HTMLImageElement) {
+  constructor(message: string, image: ImageBitmap) {
     super(message);
     this.image = image;
   }

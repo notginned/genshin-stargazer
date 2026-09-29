@@ -39,6 +39,7 @@ function Scanner({
 }: ScannerProps) {
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
   const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
+  const errorCanvasRef = useRef<Nullable<HTMLCanvasElement>>(null);
   const progressRef = useRef<Nullable<HTMLProgressElement>>(null);
   const [scannedImages, setScannedImages] = useLocalStorage<ScannedImages>(
     "scannedImages",
@@ -100,8 +101,13 @@ function Scanner({
           break;
         }
         case "error": {
-          const error = new Error(e.data.error);
+          const error = new ImageError(e.data.error, e.data.image!);
           setError(error);
+          if (!errorCanvasRef.current) return;
+          const ctx = errorCanvasRef.current.getContext("2d");
+          errorCanvasRef.current.width = error.image.width!;
+          errorCanvasRef.current.height = error.image.height!;
+          ctx?.drawImage(error.image, 0, 0);
           setIsScanning(false);
         }
       }
@@ -115,10 +121,9 @@ function Scanner({
 
     document.querySelector("main")?.append(...canvases);
 
-    // console.log("scanning");
+    console.log("scanning");
     const res = await scanImages(processed);
     console.log(res);
-    // console.time();
     // const res = await scanImages(processed, (result) => console.log(result))
     // console.log(res);
     // console.timeEnd();
@@ -129,6 +134,8 @@ function Scanner({
   const handleWorkerClick = async () => {
     if (isScanning) return;
     const newImages = objectDifference(images, scannedImages);
+    if (isEmpty(newImages)) setImages({});
+
     setIsScanning(true);
     workerRef.current?.postMessage({
       type: "process",
@@ -160,13 +167,7 @@ function Scanner({
         <p>There was an error processing the image</p>
         {!isNull(error) && <p>{error.message}</p>}
         <p>Please retry</p>
-        {error instanceof ImageError && (
-          <img
-            src={error?.image.src}
-            alt="error-image"
-            className="error-image"
-          />
-        )}
+        <canvas ref={errorCanvasRef} className="error-image" />
         <div className="error-modal-btn-wrapper">
           <button
             className="btn"

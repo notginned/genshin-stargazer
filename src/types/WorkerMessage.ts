@@ -3,7 +3,7 @@ import type { WishHistory } from "./Wish.types";
 
 type WorkerMessage =
   | { type: "result"; newHistory: WishHistory; scannedHashes: ScannedImages }
-  | { type: "error"; error: string }
+  | { type: "error"; error: string, image?: ImageBitmap }
   | { type: "progress"; value: number };
 
 type ServerMessage = {
