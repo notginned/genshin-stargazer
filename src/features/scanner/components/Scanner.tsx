@@ -17,6 +17,10 @@ import { isNull } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
 import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
+import { scanImages, scanSingleImage, service } from "../utils/scanImages.ts";
+import { gammaProcess, preprocessImages } from "../utils/preProcessImage.ts";
+import { drawDebugRegions } from "../utils/drawBoxes.ts";
+import { getDebugImages } from "../utils/getDebugImages.ts";
 
 interface ScannerProps {
   images: Images;
@@ -62,28 +66,28 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
       switch (e.data.type) {
         case "result": {
           console.log(e.data);
-          const newHistory = e.data.newHistory;
-          const processedHashes = e.data.processedHashes;
+          // const newHistory = e.data.newHistory;
+          // const processedHashes = e.data.processedHashes;
 
-          // Saving history to browser storage
-          saveHistory(newHistory);
-
-          // Showing the modal with scan results
-          setScanResultTable(newHistory);
-
-          // Set scanned images only after data state is set
-          // to avoid inconsistent cache
-          setScannedImages((oldImages) => ({
-            ...oldImages,
-            // Reducing our array of newly scanned images into a object of hashes
-            ...processedHashes.reduce<{ [hash: string]: boolean }>(
-              (acc, cur) => {
-                acc[cur] = true;
-                return acc;
-              },
-              {},
-            ),
-          }));
+          //           // Saving history to browser storage
+          //           saveHistory(newHistory);
+          //
+          //           // Showing the modal with scan results
+          //           setScanResultTable(newHistory);
+          //
+          //           // Set scanned images only after data state is set
+          //           // to avoid inconsistent cache
+          //           setScannedImages((oldImages) => ({
+          //             ...oldImages,
+          //             // Reducing our array of newly scanned images into a object of hashes
+          //             ...processedHashes.reduce<{ [hash: string]: boolean }>(
+          //               (acc, cur) => {
+          //                 acc[cur] = true;
+          //                 return acc;
+          //               },
+          //               {},
+          //             ),
+          //           }));
 
           resultsModalRef.current?.show();
 
@@ -105,45 +109,19 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   }, []);
 
   const handleClick = async () => {
-    try {
-      // Use existing cache if no new images to process
-      // otherwise process new images and add them to queue
-      //       const pIms = isEmpty(processedImages)
-      //         ? await startProcessing(images, processedImages)
-      //         : processedImages;
-      //
-      //       log({ pIms });
-      //       const res = await startScan(Object.values(pIms));
-      //       console.log(res);
-      //       setProcessedImages((previous) => ({ ...previous, ...pIms }));
-      //       setImages({});
-      //
-      //       logDebug("Processing done", { pIms });
-      //       const scanQueue = Object.values(pIms);
-      //
-      //       const newHistory = await startScan(scanQueue);
-      //       // Saving history to browser storage
-      //       saveHistory(newHistory);
-      //
-      //       // Showing the modal with scan results
-      //       setScanResultTable(newHistory);
-      //
-      //       // Set scanned images only after data state is set
-      //       // to avoid inconsistent cache
-      //       setScannedImages((oldImages) => ({
-      //         ...oldImages,
-      //         // Reducing our array of newly scanned images into a object of hashes
-      //         ...scanQueue.reduce<{ [hash: string]: boolean }>((acc, cur) => {
-      //           acc[cur.image.dataset.hash!] = true;
-      //           return acc;
-      //         }, {}),
-      //       }));
-      // resultsModalRef.current?.show();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      clearScanQueue();
-    }
+    const processed = await preprocessImages(Object.values(images));
+    const canvases = await getDebugImages(processed);
+
+    document.querySelector("main")?.append(...canvases);
+
+    console.log("scanning");
+    // const res = await scanSingleImage(processed[0]);
+    console.time();
+    const res = await scanImages(processed, (result) => console.log(result))
+    console.log(res);
+    console.timeEnd();
+
+    // const res = service.recognize(, options)
   };
 
   const handleWorkerClick = async () => {
@@ -160,11 +138,7 @@ function Scanner({ images, setImages, saveHistory }: ScannerProps) {
   return (
     <>
       {!isEmpty(images) && !isScanning && (
-        <button
-          type="button"
-          className="btn btn-scan"
-          onClick={handleWorkerClick}
-        >
+        <button type="button" className="btn btn-scan" onClick={handleClick}>
           {!isEmpty(images) ? "Process" : "Scan"} Images
         </button>
       )}

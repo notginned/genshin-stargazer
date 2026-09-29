@@ -24,16 +24,14 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
         // const scannedImages = e.data.scannedImages;
         // TODO: Remove previously scanned images
 
-        // Cannot use a cache because the Bitmaps get consumed upon scanning
-        // plus processing is cheap anyways
         const arr = Object.values(images);
         const processedHashes = Object.keys(images);
-        let counter = 0;
-        const total = arr.length * 2;
+        let counter = 0.25;
+        const total = arr.length + 0.25;
 
-        const preprocessed = await preprocessImages(arr, () =>
-          sendMessage({ type: "progress", value: ++counter / total }),
-        );
+        const preprocessed = await preprocessImages(arr);
+        sendMessage({ type: "progress", value: 0.25 });
+
         const newHistory = await startScan(preprocessed, () =>
           sendMessage({ type: "progress", value: ++counter / total }),
         );
@@ -52,44 +50,6 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
   }
 };
 
-// async function startProcessing(
-//   images: Images,
-//   processedImages: ProcessedImages,
-// ) {
-//   // console.log(isScanning);
-//   const entries = Object.entries(images);
-//   // logDebug({ entries });
-//   // logDebug(processedImages);
-//
-//   const promises: [string, ScanRegions][] = await Promise.all(
-//     entries.map(async ([hash, src]) => {
-//       // log(hash);
-//       // const out = await preProcessImage(src, hash);
-//       // console.log(out);
-//
-//       if (processedImages[hash]) {
-//         logDebug("Already processed this image", hash);
-//         return [hash, processedImages[hash]];
-//       }
-//
-//       const newScanRegion = await preProcessImage(src);
-//       // drawBoxes(newScanRegion.image, Object.values(newScanRegion.rectangles));
-//       // document.querySelector("header")?.appendChild(newScanRegion.image);
-//
-//       return [hash, newScanRegion];
-//     }),
-//   );
-//   const result = Object.fromEntries(promises);
-//
-//   return { ...processedImages, ...result };
-//
-//   // setProcessedImages((prevHashes) => ({
-//   //   ...prevHashes,
-//   //   ...result,
-//   // }));
-//   // setImages({});
-// }
-//
 async function startScan(queue: ScanRegions[], callback?: () => void) {
   const scanResults = await scanImages(queue, callback);
 

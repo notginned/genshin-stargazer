@@ -14,82 +14,25 @@ import { dedupFrames, drawFrame } from "./utils/processFrames.ts";
 import { Modal } from "../../components/Modal.tsx";
 import type { FilePickerProps } from "../../types/FilePickerProps.tsx";
 import { fileFromCanvas } from "./utils/fileFromCanvas.ts";
+import { FrameExtractor } from "./FrameExtractor.tsx";
+import { log } from "../../utils/lib.ts";
 
 // eslint-disable-next-line
 function VideoPicker({ setImages }: FilePickerProps) {
-  // TODO: Implement discarding dupes
-  // set images from frames
-  const cRef = useRef<HTMLCanvasElement | null>(null);
-  const [screens, setScreens] = useState<Frames>({});
-  const pRef = useRef<HTMLProgressElement | null>(null);
-  const mRef = useRef<HTMLDialogElement | null>(null);
-  const fRef = useRef<HTMLFormElement | null>(null);
+  const [src, setSrc] = useState<string | null>(null);
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     if (!e.target.files) return;
-
     const res: Videos = {};
-    const video = document.createElement("video");
 
-    Array.from(e.target.files, (f) => {
-      const src = URL.createObjectURL(f);
-      const hash = "h" + hashCode(f.name + f.size + f.lastModified);
-      res[hash] = src;
+    Array.from(e.target.files, (file) => {
+      const newSrc = URL.createObjectURL(file);
+      const hash = "h" + hashCode(file.name + file.size + file.lastModified);
+      res[hash] = newSrc;
 
-      video.src = src;
-    });
-
-    video.muted = true;
-    video.autoplay = true;
-    video.playbackRate = 4;
-
-    const frames: HTMLCanvasElement[] = [];
-    video.addEventListener("loadeddata", () =>
-      drawFrame(
-        video,
-        cRef.current!,
-        frames,
-        (p) => pRef.current && (pRef.current.value = p),
-      ),
-    );
-
-    video.addEventListener("playing", () => console.log("playing"));
-
-    video.addEventListener("ended", () => {
-      const uniqueFrames = dedupFrames(frames, video);
-      setScreens(() => uniqueFrames);
-      console.log(uniqueFrames);
-      if (mRef.current) mRef.current.showModal();
-      if (pRef.current) pRef.current.value = 0;
+      setSrc(newSrc);
     });
   }
-
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
-
-    if (fRef.current === null) return;
-    const results = [...new FormData(e.currentTarget).entries()].reduce<Frames>(
-      (acc, [, hash]) => {
-        acc[hash as string] = screens[hash as string];
-        return acc;
-      },
-      {},
-    );
-
-    const files = await Promise.all(
-      Object.values(results).map((frame, i) => {
-        return fileFromCanvas(frame, frame.dataset.hash || `frame ${i}`);
-      }),
-    );
-
-    const images = files.reduce<Images>((acc, cur) => {
-      acc[cur.name] = { file: cur, hash: cur.name };
-      return acc;
-    }, {});
-
-    mRef.current?.close();
-    setImages((previousImages) => ({ ...previousImages, ...images }));
-  };
 
   return (
     <>
@@ -97,30 +40,7 @@ function VideoPicker({ setImages }: FilePickerProps) {
         <InsertPhotoIcon /> Add video
         <input type="file" accept="video/*" onChange={handleChange} />
       </label>
-      <progress max="1" ref={pRef}></progress>
-      <canvas ref={cRef}></canvas>
-      <Modal
-        className="video-result-modal"
-        ref={mRef}
-        title="Video Upload results"
-      >
-        <form ref={fRef} name="video-frames" onSubmit={handleSubmit}>
-          <div className="video-result-frames">
-            {Object.entries(screens).map(([hash, url]) => (
-              <label key={hash}>
-                <img data-hash={hash} src={url.toDataURL('image/png')} />
-                <input
-                  type="checkbox"
-                  name="frame"
-                  value={hash}
-                  defaultChecked
-                />
-              </label>
-            ))}
-          </div>
-          <button type="submit">Okay</button>
-        </form>
-      </Modal>
+      {src && <FrameExtractor src={src} setImages={setImages} />}
     </>
   );
 }

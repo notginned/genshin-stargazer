@@ -587,3 +587,10 @@ a {
         width: 100%;
     }
 }
+
+video {
+    visibility: collapse;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

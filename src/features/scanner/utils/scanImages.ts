@@ -3,21 +3,18 @@ import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { ocr, PaddleOcrService } from "ppu-paddle-ocr/web";
 
-export const service = () => {
-  new PaddleOcrService({
-    debugging: {
-      debug: false,
-      verbose: false,
-    },
+export const service = new PaddleOcrService({
+  debugging: {
+    debug: false,
+    verbose: false,
+  },
 
-    session: {
-      graphOptimizationLevel: "disabled",
-      // executionMode: "parallel",
-      // Removing other backends breaks parallel processing for some reason??
-      // executionProviders: ["wasm", "webgpu", "cpu", "cuda"],
-    },
-  });
-};
+  session: {
+    // executionMode: "parallel",
+    // Removing other backends breaks parallel processing for some reason??
+    // executionProviders: ["wasm", "webgpu", "cpu", "cuda"],
+  },
+});
 
 const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
   const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
@@ -51,8 +48,8 @@ export const scanSingleImage = async (region: ScanRegions) => {
     ].map((r) => cropRegion(canvas, r)),
   );
 
-  // const rps = await service.batchRecognize(rects);
-  const rps = await Promise.all(rects.map(r => ocr(r)))
+  const rps = await service.batchRecognize(rects, { concurrency: 1 });
+  // const rps = await Promise.all(rects.map((r) => ocr(r)));
 
   const res = {
     itemName: rps[0].text,
@@ -68,23 +65,36 @@ export const scanSingleImage = async (region: ScanRegions) => {
 
 export async function scanImages(
   regions: ScanRegions[],
-  callback?: () => void,
+  callback?: (result: ScanResult) => void,
 ): Promise<ScanResult[]> {
-  const res = await Promise.all(
-    regions.map(async (region) => {
-      const scanRes = await scanSingleImage(region);
-      if (callback) callback();
+  try {
+    const res = [];
+    await service.initialize();
+    for (const region of regions) {
+      const result = await scanSingleImage(region);
+      if (callback) callback(result);
+      res.push(result);
+    }
+    await service.destroy();
+    //     const res = await Promise.all(
+    //       regions.map(async (region) => {
+    //         const scanRes = await scanSingleImage(region);
+    //         if (callback) callback();
+    //
+    //         return scanRes;
+    //       }),
+    //     );
+    // await service.destroy();
 
-      return scanRes;
-    }),
-  );
-  // await service.destroy();
-  const filtered = Object.values(
-    res.reduceRight<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
-      acc[cur.pageNumber] = cur;
-      return acc;
-    }, {}),
-  );
+    // const filtered = Object.values(
+    //   res.reduceRight<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
+    //     acc[cur.pageNumber] = cur;
+    //     return acc;
+    //   }, {}),
+    // );
 
-  return filtered;
+    return res;
+  } catch (e) {
+    throw new Error("Was not able to scan an image");
+  }
 }
