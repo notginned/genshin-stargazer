@@ -74,8 +74,6 @@ export const scanSingleImage = async (region: ScanRegions) => {
     } satisfies ScanResult;
 
     log(res);
-    throw new Error("lol");
-
     return res;
   } catch (e) {
     if (!(e instanceof Error)) throw new Error("Unable to scan an image");
