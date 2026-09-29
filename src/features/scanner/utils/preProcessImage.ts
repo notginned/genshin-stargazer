@@ -71,6 +71,9 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
   // @ts-expect-error
   gm.canvasFromTensor(outputCanvas, output);
 
+  // Free up memory
+  sess.destroy();
+
   const imageBitmap = await createImageBitmap(outputCanvas);
 
   return { hash: hash, data: imageBitmap };
