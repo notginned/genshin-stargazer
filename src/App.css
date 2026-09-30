@@ -622,6 +622,7 @@ a {
             width: 100%;
             height: 100%;
             position: relative;
+            cursor: pointer;
 
             & .screen-count {
                 font-size: 2rem;
@@ -632,6 +633,7 @@ a {
                 text-align: center;
 
                 & input[type="checkbox"] {
+                    cursor: pointer;
                     appearance: none;
                     font-weight: bold;
                     font-size: 2rem;
@@ -644,10 +646,12 @@ a {
                 }
 
                 & .input-container {
+                    cursor: pointer;
                     position: relative;
                 }
 
                 & input[type="checkbox"]::before {
+                    cursor: pointer;
                     content: "X";
                     /*content: "✔";*/
                     text-shadow: 2px 2px 6px var(--heading-fg-color);
@@ -655,16 +659,19 @@ a {
                 }
 
                 & input[type="checkbox"]:checked {
+                    cursor: pointer;
                     color: green;
                 }
 
                 input[type="checkbox"]:checked::before {
+                    cursor: pointer;
                     /* Use `visibility` instead of `display` to avoid recalculating layout */
                     content: "O";
                     visibility: visible;
                 }
 
                 input[type="checkbox"]:disabled {
+                    cursor: pointer;
                     border-color: black;
                     background: #dddddd;
                     color: gray;
@@ -682,17 +689,12 @@ a {
     }
 
     & form[name="video-frames"] {
-        /*width: 100%;*/
         height: 100%;
         display: flex;
         flex-direction: column;
         place-content: center;
         place-items: center;
         gap: 12px;
-
-        & input[type="checkbox"] {
-            height: 2rem;
-        }
     }
 }
 
