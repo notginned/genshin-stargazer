@@ -20,6 +20,7 @@ import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
 // import { preprocessImages } from "../utils/preProcessImage.ts";
 // import { getDebugImages } from "../utils/getDebugImages.ts";
 import { objectDifference } from "../../../utils/objectDifference.ts";
+import CropFreeIcon from '@mui/icons-material/CropFree';
 
 interface ScannerProps {
   images: Images;
@@ -147,7 +148,7 @@ function Scanner({
           className="btn btn-scan"
           onClick={handleWorkerClick}
         >
-          {!isEmpty(images) ? "Process" : "Scan"} Images
+          <CropFreeIcon /> Scan Images
         </button>
       )}
       {isScanning && <progress ref={progressRef} value="0" max="1" />}

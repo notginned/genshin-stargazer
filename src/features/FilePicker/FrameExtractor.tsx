@@ -91,7 +91,7 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
       <Modal
         className="video-result-modal"
         ref={modalRef}
-        title="Video Upload results"
+        title="Select screenshots to upload"
       >
         <form ref={formRef} name="video-frames" onSubmit={handleSubmit}>
           <div className="video-result-frames">
