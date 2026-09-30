@@ -11,6 +11,54 @@ import { Operation } from "gammacv";
 import * as gm from "gammacv";
 import type { SerializedImage } from "../../../types/DeserializedImage.ts";
 
+const getBounds = async (canvas: OffscreenCanvas) => {
+  const input = new gm.Tensor("uint8", [canvas.height, canvas.width, 4]);
+  // OffscreenCanvas works just fine
+  // @ts-expect-error
+  gm.canvasToTensor(canvas, input);
+
+  let pipeline: typeof input | Operation = input;
+
+  pipeline = gm.resize(pipeline, canvas.width, canvas.height, "bicubic");
+  pipeline = gm.gaussianBlur(pipeline, 3, 1);
+  pipeline = gm.grayscale(pipeline);
+  pipeline = gm.sobelOperator(pipeline);
+  pipeline = gm.cannyEdges(pipeline, 0.25, 0.75);
+  const output = gm.tensorFrom(pipeline);
+
+  if (output === null) {
+    throw new Error("Error procesing");
+  }
+
+  const sess = new gm.Session();
+  sess.init(pipeline);
+  sess.runOp(pipeline, 0, output);
+
+  let minX = Infinity;
+  let maxX = 0;
+
+  let minY = Infinity;
+  let maxY = 0;
+
+  console.log(output.get(0, 0, 3));
+  for (let x = 0; x < output.shape[1]; ++x) {
+    for (let y = 0; y < output.shape[0]; ++y) {
+      const pix = output.get(x, y, 3);
+      if (pix > 0.0) continue;
+
+      minX = Math.min(x, minX);
+      maxX = Math.max(x, maxX);
+
+      minY = Math.min(y, minY);
+      maxY = Math.max(y, maxY);
+    }
+  }
+
+  sess.destroy();
+
+  return { minX, maxX, minY, maxY };
+};
+
 const gammaProcess = async (image: ImageBitmap, hash: string) => {
   const { height, width } = image;
 
@@ -36,9 +84,9 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
   pipeline = gm.gaussianBlur(pipeline, 3, 1);
   pipeline = gm.grayscale(pipeline);
   pipeline = gm.threshold(pipeline, 0.78);
-  pipeline = gm.erode(pipeline, [1, 1]);
-  pipeline = gm.dilate(pipeline, [2, 2]);
   pipeline = gm.sub(whiteTensor, pipeline);
+  pipeline = gm.erode(pipeline, [1, 1]);
+  pipeline = gm.dilate(pipeline, [1, 1]);
 
   const output = gm.tensorFrom(pipeline);
   if (output === null) {
@@ -53,6 +101,9 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
   // OffscreenCanvas works just fine
   // @ts-expect-error
   gm.canvasFromTensor(outputCanvas, output);
+
+  const bounds = getBounds(outputCanvas);
+  console.log(bounds);
 
   // Free up memory
   sess.destroy();
