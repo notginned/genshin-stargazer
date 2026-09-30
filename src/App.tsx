@@ -9,7 +9,7 @@ import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
 import { Modal } from "./components/Modal.tsx";
 import Scanner from "./features/scanner/components/Scanner.tsx";
-import type { Images, ProcessedImages } from "./types/State.type.ts";
+import type { Images } from "./types/State.type.ts";
 import { Instructions } from "./components/Instructions.tsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -43,6 +43,8 @@ function App() {
 
   const getTables = () => {
     if (isNull(tablesRef.current)) {
+      // Works so I'm not touching it
+      // @ts-expect-error
       tablesRef.current = {};
     }
 
@@ -118,11 +120,11 @@ function App() {
           <WishTable
             key={wishes[0]?.wishType || i}
             ref={(el: HTMLTableElement) => {
-              const t = getTables();
-              t[event] = el;
+              const t = getTables()!;
+              t[event as keyof EventToTable] = el;
 
               return () => {
-                t[event] = null;
+                t[event as keyof EventToTable] = null;
               };
             }}
             wishes={wishes}

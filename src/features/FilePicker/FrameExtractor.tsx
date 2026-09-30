@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useRef,
   useState,
   type Dispatch,
@@ -11,7 +10,7 @@ import { dedupFrames, drawFrame } from "./utils/processFrames";
 import { Modal } from "../../components/Modal";
 import type { Frames, Images } from "../../types/State.type";
 import { fileFromCanvas } from "./utils/fileFromCanvas";
-import { isNull, log } from "../../utils/lib";
+import { isNull } from "../../utils/lib";
 
 interface FrameExtractorProps {
   setImages: Dispatch<SetStateAction<Images>>;
@@ -73,7 +72,13 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
 
   return (
     <div>
-      <video src={src} muted autoPlay onLoadedData={handleLoadedData} onEnded={handleEnded} />
+      <video
+        src={src}
+        muted
+        autoPlay
+        onLoadedData={handleLoadedData}
+        onEnded={handleEnded}
+      />
       <canvas ref={canvasRef} />
       <progress ref={progressRef} max="1" />
       <Modal

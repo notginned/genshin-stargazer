@@ -1,17 +1,9 @@
-import {
-  useRef,
-  useState,
-  type ChangeEvent,
-  // type Dispatch,
-  // type SetStateAction,
-} from "react";
+import { useState, type ChangeEvent } from "react";
 import { hashCode } from "../../utils/hash.ts";
-// import { log } from "../../utils/lib.ts";
 import type { FilePickerProps } from "../../types/FilePickerProps.tsx";
 import { FrameExtractor } from "./FrameExtractor.tsx";
 import VideoFile from "@mui/icons-material/VideoFile";
 
-// eslint-disable-next-line
 function VideoPicker({ setImages }: FilePickerProps) {
   const [src, setSrc] = useState<string | null>(null);
 

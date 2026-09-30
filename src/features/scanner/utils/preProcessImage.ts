@@ -5,11 +5,10 @@ import {
   TIME_RECEIVED_BBOX,
   WISH_TYPE_BBOX,
 } from "./config/bboxes.ts";
-import { log } from "../../../utils/lib.ts";
-// import { ImageError } from "../../utils/ImageError.ts";
 import { Operation } from "gammacv";
 import * as gm from "gammacv";
 import type { SerializedImage } from "../../../types/DeserializedImage.ts";
+import { ImageError } from "../../../utils/ImageError.ts";
 
 const gammaProcess = async (image: ImageBitmap, hash: string) => {
   const { height, width } = image;
@@ -48,7 +47,7 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
 
   const output = gm.tensorFrom(pipeline);
   if (output === null) {
-    throw new Error("Error procesing");
+    throw new ImageError("Error procesing image", image);
   }
 
   const sess = new gm.Session();

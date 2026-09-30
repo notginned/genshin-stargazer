@@ -3,7 +3,6 @@ import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
 import type { Images } from "../../types/State.type";
 import { hashCode } from "../../utils/hash";
 import type { FilePickerProps } from "../../types/FilePickerProps";
-import { log } from "../../utils/lib";
 
 function ImagePicker({ images, setImages }: FilePickerProps) {
   async function handleChange(e: ChangeEvent<HTMLInputElement>) {

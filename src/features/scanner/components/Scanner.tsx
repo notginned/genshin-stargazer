@@ -5,7 +5,6 @@ import {
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { processHistory } from "../../dataParser/processHistory.ts";
 import type { WishHistory } from "../../../types/Wish.types.ts";
 // import { preProcessImage } from "../utils/preProcessImage.ts";
 import { Modal } from "../../../components/Modal.tsx";
@@ -17,9 +16,9 @@ import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
 import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
-import { scanImages } from "../utils/scanImages.ts";
-import { preprocessImages } from "../utils/preProcessImage.ts";
-import { getDebugImages } from "../utils/getDebugImages.ts";
+// import { scanImages } from "../utils/scanImages.ts";
+// import { preprocessImages } from "../utils/preProcessImage.ts";
+// import { getDebugImages } from "../utils/getDebugImages.ts";
 import { objectDifference } from "../../../utils/objectDifference.ts";
 
 interface ScannerProps {
@@ -110,19 +109,19 @@ function Scanner({
   }, [setIsScanning, saveHistory, setScannedImages, setImages]);
 
   // Only there for debug purposes
-    const handleClick = async () => {
-      const processed = await preprocessImages(Object.values(images));
-      const canvases = await getDebugImages(processed);
-
-      document.querySelector("main")?.append(...canvases);
-
-      console.log("scanning");
-      const res = await scanImages(processed);
-      console.log(res);
-      // const res = await scanImages(processed, (result) => console.log(result))
-      // console.log(res);
-      // console.timeEnd();
-    };
+//     const handleClick = async () => {
+//       const processed = await preprocessImages(Object.values(images));
+//       const canvases = await getDebugImages(processed);
+//
+//       document.querySelector("main")?.append(...canvases);
+//
+//       console.log("scanning");
+//       const res = await scanImages(processed);
+//       console.log(res);
+//       // const res = await scanImages(processed, (result) => console.log(result))
+//       // console.log(res);
+//       // console.timeEnd();
+//     };
 
   const handleWorkerClick = async () => {
     if (isScanning) return;

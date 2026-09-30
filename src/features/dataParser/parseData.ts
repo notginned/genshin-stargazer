@@ -6,7 +6,6 @@ import {
   itemNamesDict,
   wishTypesDict,
 } from "./config/dictionaries.ts";
-import { log, logDebug } from "../../utils/lib.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;

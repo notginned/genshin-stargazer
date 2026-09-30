@@ -1,7 +1,5 @@
-import type { Images } from "../../../types/State.type";
 import { drawDebugRegions } from "./drawBoxes";
-import { preprocessImages } from "./preProcessImage";
-import type { Rectangle, ScanRegions } from "./scan.types";
+import type { ScanRegions } from "./scan.types";
 
 const getSingleDebugImage = async (region: ScanRegions) => {
   const bitmap = await createImageBitmap(region.image);

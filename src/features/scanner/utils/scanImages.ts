@@ -3,7 +3,7 @@ import { ImageError } from "../../../utils/ImageError";
 import { isNull, log } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
-import { ocr, PaddleOcrService } from "ppu-paddle-ocr/web";
+import {  PaddleOcrService } from "ppu-paddle-ocr/web";
 
 export const service = new PaddleOcrService({
   debugging: {
@@ -13,9 +13,7 @@ export const service = new PaddleOcrService({
 
   session: {
     graphOptimizationLevel: "all",
-    // executionMode: "parallel",
-    // Removing other backends breaks parallel processing for some reason??
-    // executionProviders: ["wasm", "webgpu", "cpu", "cuda"],
+    executionMode: "sequential",
   },
 });
 

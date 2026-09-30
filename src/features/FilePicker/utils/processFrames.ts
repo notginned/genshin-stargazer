@@ -1,4 +1,4 @@
-import { type Frames, type Images } from "../../../types/State.type";
+import { type Frames } from "../../../types/State.type";
 import { hashCode } from "../../../utils/hash";
 import { log } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
