@@ -23,6 +23,7 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const frames: HTMLCanvasElement[] = [];
+  const [isProcessing, setIsProcessing] = useState<boolean>(true);
 
   const handleLoadedData: ReactEventHandler<HTMLVideoElement> = (e) => {
     e.currentTarget.defaultPlaybackRate = 4;
@@ -41,6 +42,8 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
     console.log(uniqueFrames);
     if (!isNull(modalRef.current)) modalRef.current.showModal();
     if (!isNull(progressRef.current)) progressRef.current.value = 0;
+    // Hide canvas after processing
+    setIsProcessing(() => false);
   };
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
@@ -79,8 +82,12 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
         onLoadedData={handleLoadedData}
         onEnded={handleEnded}
       />
-      <canvas ref={canvasRef} />
-      <progress ref={progressRef} max="1" />
+      {isProcessing && (
+        <>
+          <canvas ref={canvasRef} />
+          <progress ref={progressRef} max="1" />
+        </>
+      )}
       <Modal
         className="video-result-modal"
         ref={modalRef}
