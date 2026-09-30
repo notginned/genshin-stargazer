@@ -86,6 +86,7 @@ export async function scanImages(
 ): Promise<ScanResult[]> {
   try {
     const res = [];
+
     await service.initialize();
     for (const region of regions) {
       const result = await scanSingleImage(region);
@@ -93,12 +94,6 @@ export async function scanImages(
       res.push(result);
     }
     await service.destroy();
-    // const filtered = Object.values(
-    //   res.reduceRight<{ [pageNumber: string]: ScanResult }>((acc, cur) => {
-    //     acc[cur.pageNumber] = cur;
-    //     return acc;
-    //   }, {}),
-    // );
 
     return res;
   } catch (e) {

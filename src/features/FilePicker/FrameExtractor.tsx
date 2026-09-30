@@ -11,7 +11,7 @@ import { dedupFrames, drawFrame } from "./utils/processFrames";
 import { Modal } from "../../components/Modal";
 import type { Frames, Images } from "../../types/State.type";
 import { fileFromCanvas } from "./utils/fileFromCanvas";
-import { isNull } from "../../utils/lib";
+import { isNull, logDebug } from "../../utils/lib";
 
 interface FrameExtractorProps {
   setImages: Dispatch<SetStateAction<Images>>;
@@ -53,7 +53,7 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
   const handleEnded: ReactEventHandler<HTMLVideoElement> = (e) => {
     const uniqueFrames = dedupFrames(frames, e.currentTarget);
     setScreens(() => uniqueFrames);
-    console.log(uniqueFrames);
+    logDebug(uniqueFrames);
     if (!isNull(modalRef.current)) modalRef.current.showModal();
     if (!isNull(progressRef.current)) progressRef.current.value = 0;
 

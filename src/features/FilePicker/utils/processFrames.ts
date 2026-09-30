@@ -1,6 +1,5 @@
 import { type Frames } from "../../../types/State.type";
 import { hashCode } from "../../../utils/hash";
-import { log } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
 
 const drawFrame = (
@@ -17,7 +16,6 @@ const drawFrame = (
   mainCanvas.height = height;
   const mainCtx = mainCanvas.getContext("2d");
   if (mainCtx === null) throw new Error("Couldnt get context");
-  console.log({ width, height });
 
   const updateCanvas: VideoFrameRequestCallback = (_now, _metadata) => {
     const currentTime = video.currentTime;
@@ -29,7 +27,6 @@ const drawFrame = (
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (ctx === null) throw new Error("Couldnt get context");
 
-      log(currentTime);
       dt = currentTime;
       ctx.drawImage(video, 0, 0, width, height);
       mainCtx.drawImage(video, 0, 0, width, height);
