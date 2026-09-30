@@ -12,7 +12,6 @@ import { Modal } from "../../components/Modal";
 import type { Frames, Images } from "../../types/State.type";
 import { fileFromCanvas } from "./utils/fileFromCanvas";
 import { isNull } from "../../utils/lib";
-import { ProgressIndicator } from "../../components/ProgressIndicator";
 
 interface FrameExtractorProps {
   setImages: Dispatch<SetStateAction<Images>>;
