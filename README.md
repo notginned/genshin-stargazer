@@ -15,10 +15,7 @@ All the processing is done on your device, no data is uploaded.
 
 1. Clone the repo
 ```
-# via SSH
-git clone git@github.com:notginned/genshin-stargazer.git && cd genshin-stargazer
-
-## or via https
+## via https
 git clone https://github.com/notginned/genshin-stargazer.git && cd genshin-stargazer
 
 ```
