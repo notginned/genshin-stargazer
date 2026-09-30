@@ -1,71 +1,104 @@
 // import { PaddleOCR } from "@paddleocr/paddleocr-js";
-import { logDebug } from "../../../utils/lib";
+import { ImageError } from "../../../utils/ImageError";
+import { isNull, log } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
-import { PaddleOcrService } from "ppu-paddle-ocr/web";
+import {  PaddleOcrService } from "ppu-paddle-ocr/web";
 
 export const service = new PaddleOcrService({
   debugging: {
     debug: false,
     verbose: false,
   },
+
   session: {
-    executionMode: "parallel",
-    // Removing other backends breaks parallel processing for some reason??
-    executionProviders: ["wasm", "webgpu", "cpu", "cuda"],
+    graphOptimizationLevel: "all",
+    executionMode: "sequential",
   },
 });
 
-const cropRegion = (img: HTMLCanvasElement, rectangle: Rectangle) => {
-  const canvas = document.createElement("canvas");
-  canvas.width = rectangle.width;
-  canvas.height = rectangle.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(
-    img,
-    rectangle.left,
-    rectangle.top,
-    rectangle.width,
-    rectangle.height, // Destination canvas
-    0,
-    0,
-    rectangle.width,
-    rectangle.height, // Destination canvas
+const cropRegion = async (image: OffscreenCanvas, rectangle: Rectangle) => {
+  const canvas = new OffscreenCanvas(rectangle.width, rectangle.height);
+  const ctx = canvas.getContext("2d");
+  ctx?.drawImage(
+    image, // source image
+    rectangle.left, // source start x
+    rectangle.top, // source start y
+    rectangle.width, // crop width
+    rectangle.height, // crop height
+    0, // dest start x
+    0, // dest start y
+    rectangle.width, // dest width
+    rectangle.height, // dest height
   );
 
   return canvas;
 };
 
-const scanSingleImage = async (region: ScanRegions) => {
-  const res: ScanResult = {} as ScanResult;
+export const scanSingleImage = async (region: ScanRegions) => {
+  try {
+    const canvas = new OffscreenCanvas(region.image.width, region.image.height);
+    const ctx = canvas.getContext("2d");
+    if (isNull(ctx)) throw new Error("Could not get canvas context");
 
-  const canvases = [
-    region.rectangles.itemNameRectangle,
-    region.rectangles.typeRectangle,
-    region.rectangles.timeRectangle,
-    region.rectangles.pageRectangle,
-  ].map((r) => cropRegion(region.image, r));
+    ctx.drawImage(
+      region.image, // source image
+      0, // source start x
+      0, // source start y
+      canvas.width, // crop width
+      canvas.height, // crop height
+    );
 
-  await service.initialize();
-  const rps = await service.batchRecognize(canvases);
-  await service.destroy();
-  res.itemName = rps[0].text;
-  res.wishType = rps[1].text;
-  res.timeReceived = rps[2].text;
-  res.pageNumber = rps[3].text;
+    const rects = await Promise.all(
+      [
+        region.rectangles.itemNameRectangle,
+        region.rectangles.typeRectangle,
+        region.rectangles.timeRectangle,
+        region.rectangles.pageRectangle,
+      ].map((r) => cropRegion(canvas, r)),
+    );
 
-  return res;
+    // Concurrency is a lie
+    const rps = await service.batchRecognize(rects, {
+      concurrency: 1,
+    });
+    // const rps = await Promise.all(rects.map((r) => ocr(r)));
+
+    const res = {
+      itemName: rps[0].text,
+      wishType: rps[1].text,
+      timeReceived: rps[2].text,
+      pageNumber: rps[3].text,
+    } satisfies ScanResult;
+
+    log(res);
+    return res;
+  } catch (e) {
+    if (!(e instanceof Error)) throw new Error("Unable to scan an image");
+
+    throw new ImageError(e.message, region.image);
+  }
 };
 
 export async function scanImages(
   regions: ScanRegions[],
-  callback: (region: ScanRegions) => void = (region) => logDebug(region),
+  callback?: (result: ScanResult) => void,
 ): Promise<ScanResult[]> {
-  const res = await Promise.all(
-    regions.map(async (region) => {
-      callback(region);
-      return scanSingleImage(region);
-    }),
-  );
-  return res;
+  try {
+    const res = [];
+
+    await service.initialize();
+    for (const region of regions) {
+      const result = await scanSingleImage(region);
+      if (callback) callback(result);
+      res.push(result);
+    }
+    await service.destroy();
+
+    return res;
+  } catch (e) {
+    if (!(e instanceof Error)) throw new Error("Unable to scan an image");
+
+    throw e;
+  }
 }

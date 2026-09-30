@@ -38,6 +38,8 @@ function historyReducer(acc: WishHistory, cur: Wish[]): WishHistory {
     const wishType = convertToKey(wish.wishType);
 
     // Lightrace wishes share pity with chronicled
+    // the comparison is intentional
+    // @ts-expect-error
     if (wishType === "lightrace_wish") {
       acc.chronicled_wish.push(wish);
     } else {
@@ -52,7 +54,8 @@ function sortWishHistory(history: WishHistory): WishHistory {
   const res = createEmptyWishHistory();
 
   for (const type of Object.keys(history)) {
-    res[type] = history[type].toSorted(wishComparator);
+    res[convertToKey(type)] =
+      history[convertToKey(type)].toSorted(wishComparator);
   }
 
   return res;
@@ -125,7 +128,7 @@ function mergeHistories(
   for (const type of Object.keys(res)) {
     const oldList = oldHistory[type as keyof typeof oldHistory];
     const newList = newHistory[type as keyof typeof oldHistory];
-    
+
     res[type as keyof typeof res] = mergeList(oldList ?? [], newList ?? []);
   }
 

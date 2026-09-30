@@ -8,7 +8,7 @@ export interface Wish {
 }
 
 export interface WishHistory {
-  [key: string]: Wish[];
+  // [key: string]: Wish[];
   character_event_wish: Wish[];
   weapon_event_wish: Wish[];
   permanent_wish: Wish[];

@@ -4,7 +4,6 @@ import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
 import { mergeHistories } from "./features/dataParser/historyReducer.ts";
 import type { WishHistory } from "./types/Wish.types.ts";
 import { createEmptyWishHistory } from "./utils/createEmptyWishHistory.ts";
-import { ImagePicker } from "./components/ImagePicker.tsx";
 import { generateSheet } from "./features/wishTable/utils/generateSheet.ts";
 import type { EventToTable } from "./types/Table.types.ts";
 import { WishTable } from "./features/wishTable/components/WishTable.tsx";
@@ -17,29 +16,35 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { isNull } from "./utils/lib.ts";
 import { ProgressIndicator } from "./components/ProgressIndicator.tsx";
+import { FilePicker } from "./features/FilePicker/FilePicker.tsx";
 
 function App() {
-  function saveHistory(newHistory: WishHistory) {
-    setHistory((prevHistory) => mergeHistories(prevHistory, newHistory));
-  }
+  const [history, setHistory] = useLocalStorage<WishHistory>(
+    "history",
+    createEmptyWishHistory(),
+  );
 
-  function handleClearHistory() {
+  const [images, setImages] = useState<Images>({});
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState("character_event_wish");
+  const tablesRef = useRef<EventToTable>(null);
+  const clearHistoryDialogRef = useRef<HTMLDialogElement>(null);
+
+  const saveHistory = (newHistory: WishHistory) => {
+    setHistory((prevHistory) => mergeHistories(prevHistory, newHistory));
+  };
+
+  const handleClearHistory = () => {
     if (isNull(clearHistoryDialogRef.current)) return;
     localStorage.clear();
     clearHistoryDialogRef.current.close();
     window.location.reload();
-  }
-  const [history, setHistory] = useLocalStorage<WishHistory>("history", createEmptyWishHistory());
-
-  const [images, setImages] = useState<Images>({});
-
-  const [activeTab, setActiveTab] = useState("character_event_wish");
-
-  const tablesRef = useRef<EventToTable>(null);
-  const clearHistoryDialogRef = useRef<HTMLDialogElement>(null);
+  };
 
   const getTables = () => {
     if (isNull(tablesRef.current)) {
+      // Works so I'm not touching it
+      // @ts-expect-error
       tablesRef.current = {};
     }
 
@@ -59,18 +64,31 @@ function App() {
           </h1>
 
           <div className="toolbar">
-            <button className="btn btn-export" onClick={() => generateSheet(tablesRef.current)}>
+            {!isScanning && (
+              <FilePicker images={images} setImages={setImages} />
+            )}
+            <button
+              className="btn btn-export"
+              onClick={() => generateSheet(tablesRef.current)}
+            >
               Export <FileDownloadIcon />
             </button>
-            <ImagePicker setImages={setImages} images={images} />
+
             <Suspense
               fallback={
                 <div className="scanner-fallback">
-                  <span>Downloading required components...</span> <ProgressIndicator />
+                  <span>Downloading required components...</span>{" "}
+                  <ProgressIndicator />
                 </div>
               }
             >
-              <Scanner images={images} setImages={setImages} saveHistory={saveHistory} />
+              <Scanner
+                images={images}
+                isScanning={isScanning}
+                setIsScanning={setIsScanning}
+                setImages={setImages}
+                saveHistory={saveHistory}
+              />
             </Suspense>
 
             <button
@@ -83,10 +101,14 @@ function App() {
           </div>
           <div className="wish-type-container">
             <h3>Wish Type</h3>
-            <select name="events" onChange={(e) => setActiveTab(e.target.value)}>
+            <select
+              name="events"
+              onChange={(e) => setActiveTab(e.target.value)}
+            >
               {Object.keys(history).map((event) => (
                 <option key={event} value={event}>
-                  {event.split("_").join(" ")} ({history[event].length})
+                  {event.split("_").join(" ")} (
+                  {history[event as keyof WishHistory].length})
                 </option>
               ))}
             </select>
@@ -98,11 +120,11 @@ function App() {
           <WishTable
             key={wishes[0]?.wishType || i}
             ref={(el: HTMLTableElement) => {
-              const t = getTables();
-              t[event] = el;
+              const t = getTables()!;
+              t[event as keyof EventToTable] = el;
 
               return () => {
-                t[event] = null;
+                t[event as keyof EventToTable] = null;
               };
             }}
             wishes={wishes}
@@ -110,10 +132,17 @@ function App() {
           />
         ))}
       </main>
-      <Modal title="Delete data" className="delete-modal" ref={clearHistoryDialogRef}>
+      <Modal
+        title="Delete data"
+        className="delete-modal"
+        ref={clearHistoryDialogRef}
+      >
         Do you want to delete your history?
         <div className="modal-actions">
-          <button className="btn" onClick={() => clearHistoryDialogRef.current?.close()}>
+          <button
+            className="btn"
+            onClick={() => clearHistoryDialogRef.current?.close()}
+          >
             No
           </button>
           <button className="btn btn-delete" onClick={handleClearHistory}>

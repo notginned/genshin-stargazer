@@ -12,7 +12,7 @@ function Modal({ title, className, children, ...props }: ModalProps) {
     <>
       <dialog {...props}>
         <div className="dialog-modal-container">
-          <div className={className + " " + "dialog-modal-card"}>
+          <div className={"dialog-modal-card" + " " + className}>
             <h3>{title}</h3>
             {children}
           </div>

@@ -6,15 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "oxlint .",
     "preview": "vite preview",
     "populate": "scripts/populate"
   },
   "dependencies": {
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.2",
-    "@techstark/opencv-js": "^4.11.0-release.1",
+    "gammacv": "^0.5.3",
     "onnxruntime-web": "^1.30.0",
+    "pixelmatch": "^7.2.0",
     "ppu-paddle-ocr": "^6.6.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -26,6 +27,9 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react-swc": "^4.0.0",
+    "eslint-plugin-n": "^18.4.0",
+    "eslint-plugin-promise": "^7.3.0",
+    "eslint-plugin-react": "^7.37.5",
     "globals": "^16.3.0",
     "jsdom": "^27.0.0",
     "oxfmt": "^0.68.0",

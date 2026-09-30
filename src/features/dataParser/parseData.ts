@@ -1,42 +1,64 @@
 import { BKTree } from "../../utils/BKTree.ts";
 import type { ScanResult } from "../scanner/utils/scan.types.ts";
 import type { Wish } from "../../types/Wish.types.ts";
-import { itemNamesDict, wishTypesDict } from "./config/dictionaries.ts";
-import { log, logDebug } from "../../utils/lib.ts";
+import {
+  headersDict,
+  itemNamesDict,
+  wishTypesDict,
+} from "./config/dictionaries.ts";
 
 // all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
 const rarityRegex = /\W+\d\W*-\W*.*/;
 
-function correctName(name: string, tree: BKTree): [string, number] {
+function correctName(
+  name: string,
+  tree: BKTree,
+  tolerance: number,
+): [string, number] {
   const [result, distance] = tree
     // More tolerant towards longer strings
-    .search(name, Math.ceil(name.length / 5))
+    .search(name, Math.ceil(name.length / tolerance))
     .sort(([, d1], [, d2]) => d1 - d2)[0] || [name, Infinity];
 
   return [result, distance];
 }
 
-function prepareColumn(data: string): string[] {
-  const [, ...items ] = data.split('\n');
-  return items;
+function prepareColumn(
+  data: string,
+  header: string,
+  tolerance: number,
+): string[] {
+  const splitted = data.split("\n");
+  // Excluding the searched header
+  const items = splitted.slice(
+    1 +
+      splitted.findIndex(
+        (x) => header === correctName(x, headersDict, tolerance)[0],
+      ),
+  );
 
+  return items;
 }
 
-function sanitizeSingleItem(name: string, dict: BKTree): [string, number] {
+function sanitizeSingleItem(
+  name: string,
+  dict: BKTree,
+  tolerance: number,
+): [string, number] {
   const cleaned = name?.trim().replace(rarityRegex, "").trim();
 
   if (!cleaned) return [cleaned, Infinity];
 
-  return correctName(cleaned, dict);
+  return correctName(cleaned, dict, tolerance);
 }
 
-function sanitizeItems(items: string[], dict: BKTree) {
+function sanitizeItems(items: string[], dict: BKTree, tolerance = 5) {
   const res = [];
 
   for (let i = 0; i < items.length; ++i) {
-    const [cleaned, distance] = sanitizeSingleItem(items[i], dict);
+    const [cleaned, distance] = sanitizeSingleItem(items[i], dict, tolerance);
 
-    if (distance <= Math.ceil(cleaned.length / 5)) {
+    if (distance <= Math.ceil(cleaned.length / tolerance)) {
       res.push(cleaned);
       continue;
     }
@@ -46,7 +68,8 @@ function sanitizeItems(items: string[], dict: BKTree) {
     // Genshin only has item names upto 2 rows AFAIK
     const [joined, joinedDistance] = sanitizeSingleItem(
       cleaned + " " + items[i + 1]?.trim(),
-      dict
+      dict,
+      tolerance,
     );
 
     if (joinedDistance <= 2) {
@@ -64,30 +87,39 @@ function pad(n: number, maxLength = 2, fillString = "0"): string {
 function parseDate(timestamp: number) {
   const dateObj = new Date(timestamp);
   const date = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(
-    dateObj.getDate()
+    dateObj.getDate(),
   )}`;
 
   const time = `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(
-    dateObj.getSeconds()
+    dateObj.getSeconds(),
   )}`;
 
   return `${date} ${time}`;
 }
 
-function parseScanResults(data: ScanResult): Wish[] {
-  const pageNumber = Number(data.pageNumber[0]?.trim());
+function dateFromTimeString(time: string) {
+  return new Date(
+    time.substring(0, 10).replaceAll(/[^\d]/g, "/") +
+      " " +
+      time.substring(10).replaceAll(/[^\d]/g, ":"),
+  ).valueOf();
+}
 
-  const itemNamesCol = prepareColumn(data.itemName);
+function parseScanResults(data: ScanResult): Wish[] {
+  const pageNumber = Number(data.pageNumber?.replaceAll(/[^0-9]/g, ""));
+
+  const itemNamesCol = prepareColumn(data.itemName, "Item Name", 5);
   const itemNames = sanitizeItems(itemNamesCol, itemNamesDict);
 
-  const wishTypesCol = prepareColumn(data.wishType);
-  const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict);
+  const wishTypesCol = prepareColumn(data.wishType, "Wish Type", 5);
+  const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict, 3);
 
   // First 10 characters are YY-MM-DD
   // Rest are hh:mm:ss
-  const timeReceived = prepareColumn(data.timeReceived).map(
-    (time) =>
-      new Date(time.substring(0, 10) + " " + time.substring(10)).valueOf()
+  // Replace non digits with proper separators
+  // the date constructor takes care of any missing values accurately
+  const timeReceived = prepareColumn(data.timeReceived, "Time Received", 5).map(
+    dateFromTimeString,
   );
 
   const wishes = itemNames.map<Wish>((itemName, i) => {
@@ -101,8 +133,6 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
-  log("data", data);
-  logDebug("wish", wishes);
   return wishes;
 }
 

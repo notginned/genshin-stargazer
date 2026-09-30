@@ -6,7 +6,8 @@ export interface Rectangle {
 }
 
 export interface ScanRegions {
-  image: HTMLCanvasElement;
+  image: ImageBitmap;
+  hash: string;
   rectangles: {
     itemNameRectangle: Rectangle;
     typeRectangle: Rectangle;
