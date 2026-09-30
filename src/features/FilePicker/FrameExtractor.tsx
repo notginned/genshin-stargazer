@@ -3,6 +3,7 @@ import {
   useState,
   type Dispatch,
   type ReactEventHandler,
+  type RefObject,
   type SetStateAction,
   type SubmitEventHandler,
 } from "react";
@@ -15,15 +16,26 @@ import { isNull } from "../../utils/lib";
 interface FrameExtractorProps {
   setImages: Dispatch<SetStateAction<Images>>;
   src: string;
+  setSrc: Dispatch<SetStateAction<string | null>>;
 }
-const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
+
+const showElement = <T extends HTMLElement>(ref: RefObject<T | null>) => {
+  if (!ref.current) return;
+  ref.current.style.display = "initial";
+};
+
+const hideElement = <T extends HTMLElement>(ref: RefObject<T | null>) => {
+  if (!ref.current) return;
+  ref.current.style.display = "none";
+};
+
+const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
   const [screens, setScreens] = useState<Frames>({});
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const progressRef = useRef<HTMLProgressElement | null>(null);
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const frames: HTMLCanvasElement[] = [];
-  const [isProcessing, setIsProcessing] = useState<boolean>(true);
 
   const handleLoadedData: ReactEventHandler<HTMLVideoElement> = (e) => {
     e.currentTarget.defaultPlaybackRate = 4;
@@ -34,6 +46,8 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
       frames,
       (p) => progressRef.current && (progressRef.current.value = p),
     );
+    showElement(canvasRef);
+    showElement(progressRef);
   };
 
   const handleEnded: ReactEventHandler<HTMLVideoElement> = (e) => {
@@ -42,8 +56,10 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
     console.log(uniqueFrames);
     if (!isNull(modalRef.current)) modalRef.current.showModal();
     if (!isNull(progressRef.current)) progressRef.current.value = 0;
-    // Hide canvas after processing
-    setIsProcessing(() => false);
+
+    // Hide canvas and progress bar after processing
+    hideElement(canvasRef);
+    hideElement(progressRef);
   };
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
@@ -71,6 +87,7 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
 
     modalRef.current?.close();
     setImages((previousImages) => ({ ...previousImages, ...images }));
+    setSrc(null);
   };
 
   return (
@@ -82,12 +99,10 @@ const FrameExtractor = ({ setImages, src }: FrameExtractorProps) => {
         onLoadedData={handleLoadedData}
         onEnded={handleEnded}
       />
-      {isProcessing && (
-        <>
-          <canvas ref={canvasRef} />
-          <progress ref={progressRef} max="1" />
-        </>
-      )}
+      <>
+        <canvas ref={canvasRef} />
+        <progress ref={progressRef} max="1" />
+      </>
       <Modal
         className="video-result-modal"
         ref={modalRef}

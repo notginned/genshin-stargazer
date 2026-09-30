@@ -25,7 +25,7 @@ function VideoPicker({ setImages }: FilePickerProps) {
         <VideoFile /> Add video
         <input type="file" accept="video/*" onChange={handleChange} />
       </label>
-      {src && <FrameExtractor src={src} setImages={setImages} />}
+      {src && <FrameExtractor src={src} setImages={setImages} setSrc={setSrc} />}
     </>
   );
 }
