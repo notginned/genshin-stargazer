@@ -113,7 +113,7 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
         <form ref={formRef} name="video-frames" onSubmit={handleSubmit}>
           <div className="video-result-frames">
             {resultEntries.map(([hash, url], i) => (
-              <label key={hash}>
+              <label key={hash} title="Click or tap to toggle selection">
                 <div className="screen-count">
                   <span>{i + 1}</span>
                   <div className="input-container">
