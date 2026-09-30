@@ -11,7 +11,7 @@ import { Operation } from "gammacv";
 import * as gm from "gammacv";
 import type { SerializedImage } from "../../../types/DeserializedImage.ts";
 
-const getBounds = async (canvas: OffscreenCanvas) => {
+const getBounds = (canvas: OffscreenCanvas) => {
   const input = new gm.Tensor("uint8", [canvas.height, canvas.width, 4]);
   // OffscreenCanvas works just fine
   // @ts-expect-error
@@ -19,11 +19,11 @@ const getBounds = async (canvas: OffscreenCanvas) => {
 
   let pipeline: typeof input | Operation = input;
 
-  pipeline = gm.resize(pipeline, canvas.width, canvas.height, "bicubic");
-  pipeline = gm.gaussianBlur(pipeline, 3, 1);
+  pipeline = gm.gaussianBlur(pipeline, 13, 1);
   pipeline = gm.grayscale(pipeline);
   pipeline = gm.sobelOperator(pipeline);
-  pipeline = gm.cannyEdges(pipeline, 0.25, 0.75);
+  pipeline = gm.cannyEdges(pipeline, 0.4, 0.5);
+
   const output = gm.tensorFrom(pipeline);
 
   if (output === null) {
@@ -40,11 +40,11 @@ const getBounds = async (canvas: OffscreenCanvas) => {
   let minY = Infinity;
   let maxY = 0;
 
-  console.log(output.get(0, 0, 3));
+  console.log("78, 232", output.get(78, 232, 4));
   for (let x = 0; x < output.shape[1]; ++x) {
     for (let y = 0; y < output.shape[0]; ++y) {
-      const pix = output.get(x, y, 3);
-      if (pix > 0.0) continue;
+      const pix = output.get(x, y, 4);
+      if (pix !== 255) continue;
 
       minX = Math.min(x, minX);
       maxX = Math.max(x, maxX);
@@ -80,13 +80,21 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
 
   let pipeline: typeof input | Operation = input;
 
+  // pipeline = gm.resize(pipeline, newWidth, newHeight, "bicubic");
+  // pipeline = gm.gaussianBlur(pipeline, 3, 1);
+  // pipeline = gm.grayscale(pipeline);
+  // pipeline = gm.threshold(pipeline, 0.78);
+  // pipeline = gm.sub(whiteTensor, pipeline);
+  // pipeline = gm.erode(pipeline, [1, 1]);
+  // pipeline = gm.dilate(pipeline, [1, 1]);
+
+
   pipeline = gm.resize(pipeline, newWidth, newHeight, "bicubic");
-  pipeline = gm.gaussianBlur(pipeline, 3, 1);
+  pipeline = gm.gaussianBlur(pipeline, 13, 1);
   pipeline = gm.grayscale(pipeline);
-  pipeline = gm.threshold(pipeline, 0.78);
-  pipeline = gm.sub(whiteTensor, pipeline);
-  pipeline = gm.erode(pipeline, [1, 1]);
-  pipeline = gm.dilate(pipeline, [1, 1]);
+  pipeline = gm.sobelOperator(pipeline);
+  pipeline = gm.cannyEdges(pipeline, 0.4, 0.5);
+
 
   const output = gm.tensorFrom(pipeline);
   if (output === null) {
@@ -102,7 +110,7 @@ const gammaProcess = async (image: ImageBitmap, hash: string) => {
   // @ts-expect-error
   gm.canvasFromTensor(outputCanvas, output);
 
-  const bounds = getBounds(outputCanvas);
+  const bounds = getBounds(canvas);
   console.log(bounds);
 
   // Free up memory
