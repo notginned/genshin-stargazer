@@ -37,9 +37,9 @@ function Instructions() {
           uploads just fine.
         </p>
         <p>
-          If an image can not be processed, you will get an error and that batch
-          will be discarded. If it's a valid screenshot, please copy the error
-          by clicking on the "Copy Error" button and open an issue on{" "}
+          If an image can not be processed, you will get an error and you can
+          safely try again. If the error persists, please copy it error by
+          clicking on the "Copy Error" button and open an issue on{" "}
           <a
             href="https://github.com/gingkapls/genshin-stargazer/issues"
             rel="noopener noreferrer"
