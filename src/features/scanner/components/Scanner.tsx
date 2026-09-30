@@ -95,7 +95,9 @@ function Scanner({
         case "error": {
           const error = new ImageError(e.data.error, e.data.image!);
           setError(error);
+
           if (!errorCanvasRef.current) return;
+          if (!(error instanceof ImageError)) return;
           const ctx = errorCanvasRef.current.getContext("2d");
           errorCanvasRef.current.width = error.image.width!;
           errorCanvasRef.current.height = error.image.height!;
@@ -108,21 +110,19 @@ function Scanner({
   }, [setIsScanning, saveHistory, setScannedImages, setImages]);
 
   // Only there for debug purposes
-  //   const handleClick = async () => {
-  //     const processed = await preprocessImages(Object.values(images));
-  //     const canvases = await getDebugImages(processed);
-  //
-  //     document.querySelector("main")?.append(...canvases);
-  //
-  //     console.log("scanning");
-  //     const res = await scanImages(processed);
-  //     console.log(res);
-  //     // const res = await scanImages(processed, (result) => console.log(result))
-  //     // console.log(res);
-  //     // console.timeEnd();
-  //
-  //     // const res = service.recognize(, options)
-  //   };
+    const handleClick = async () => {
+      const processed = await preprocessImages(Object.values(images));
+      const canvases = await getDebugImages(processed);
+
+      document.querySelector("main")?.append(...canvases);
+
+      console.log("scanning");
+      const res = await scanImages(processed);
+      console.log(res);
+      // const res = await scanImages(processed, (result) => console.log(result))
+      // console.log(res);
+      // console.timeEnd();
+    };
 
   const handleWorkerClick = async () => {
     if (isScanning) return;
