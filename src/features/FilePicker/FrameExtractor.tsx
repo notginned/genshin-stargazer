@@ -12,6 +12,7 @@ import { Modal } from "../../components/Modal";
 import type { Frames, Images } from "../../types/State.type";
 import { fileFromCanvas } from "./utils/fileFromCanvas";
 import { isNull } from "../../utils/lib";
+import { ProgressIndicator } from "../../components/ProgressIndicator";
 
 interface FrameExtractorProps {
   setImages: Dispatch<SetStateAction<Images>>;
@@ -90,6 +91,8 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
     setSrc(null);
   };
 
+  const resultEntries = Object.entries(screens);
+
   return (
     <div>
       <video
@@ -99,30 +102,37 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
         onLoadedData={handleLoadedData}
         onEnded={handleEnded}
       />
-      <>
+      <label className="scan-progressbar">
         <canvas ref={canvasRef} />
-        <progress ref={progressRef} max="1" />
-      </>
+        Processing video <progress ref={progressRef} value="0" max="1" />
+      </label>
       <Modal
         className="video-result-modal"
         ref={modalRef}
-        title="Select screenshots to upload"
+        title={`Select screenshots to upload (${resultEntries.length})`}
       >
         <form ref={formRef} name="video-frames" onSubmit={handleSubmit}>
           <div className="video-result-frames">
-            {Object.entries(screens).map(([hash, url]) => (
+            {resultEntries.map(([hash, url], i) => (
               <label key={hash}>
+                <div className="screen-count">
+                  <span>{i + 1}</span>
+                  <div className="input-container">
+                    <input
+                      type="checkbox"
+                      name="frame"
+                      value={hash}
+                      defaultChecked
+                    />
+                  </div>
+                </div>
                 <img data-hash={hash} src={url.toDataURL("image/png")} />
-                <input
-                  type="checkbox"
-                  name="frame"
-                  value={hash}
-                  defaultChecked
-                />
               </label>
             ))}
           </div>
-          <button type="submit">Okay</button>
+          <button className="btn" type="submit">
+            Upload
+          </button>
         </form>
       </Modal>
     </div>

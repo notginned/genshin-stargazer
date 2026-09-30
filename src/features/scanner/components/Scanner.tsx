@@ -20,7 +20,7 @@ import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
 // import { preprocessImages } from "../utils/preProcessImage.ts";
 // import { getDebugImages } from "../utils/getDebugImages.ts";
 import { objectDifference } from "../../../utils/objectDifference.ts";
-import CropFreeIcon from '@mui/icons-material/CropFree';
+import CropFreeIcon from "@mui/icons-material/CropFree";
 
 interface ScannerProps {
   images: Images;
@@ -110,23 +110,24 @@ function Scanner({
   }, [setIsScanning, saveHistory, setScannedImages, setImages]);
 
   // Only there for debug purposes
-//     const handleClick = async () => {
-//       const processed = await preprocessImages(Object.values(images));
-//       const canvases = await getDebugImages(processed);
-//
-//       document.querySelector("main")?.append(...canvases);
-//
-//       console.log("scanning");
-//       const res = await scanImages(processed);
-//       console.log(res);
-//       // const res = await scanImages(processed, (result) => console.log(result))
-//       // console.log(res);
-//       // console.timeEnd();
-//     };
+  //     const handleClick = async () => {
+  //       const processed = await preprocessImages(Object.values(images));
+  //       const canvases = await getDebugImages(processed);
+  //
+  //       document.querySelector("main")?.append(...canvases);
+  //
+  //       console.log("scanning");
+  //       const res = await scanImages(processed);
+  //       console.log(res);
+  //       // const res = await scanImages(processed, (result) => console.log(result))
+  //       // console.log(res);
+  //       // console.timeEnd();
+  //     };
+
+  const newImages = objectDifference(images, scannedImages);
 
   const handleWorkerClick = async () => {
     if (isScanning) return;
-    const newImages = objectDifference(images, scannedImages);
     if (isEmpty(newImages)) setImages({});
     if (isNull(workerRef.current)) {
       return setError(new Error("Could not create worker"));
@@ -148,10 +149,14 @@ function Scanner({
           className="btn btn-scan"
           onClick={handleWorkerClick}
         >
-          <CropFreeIcon /> Scan Images
+          <CropFreeIcon /> Scan Images ({Object.keys(newImages).length})
         </button>
       )}
-      {isScanning && <progress ref={progressRef} value="0" max="1" />}
+      {isScanning && (
+        <label className="scan-progressbar">
+          Scanning <progress ref={progressRef} value="0" max="1" />
+        </label>
+      )}
 
       <Modal
         title="Error"
