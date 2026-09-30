@@ -93,16 +93,20 @@ function Scanner({
           break;
         }
         case "error": {
-          const error = new ImageError(e.data.error, e.data.image!);
+          const error = e.data.image
+            ? new ImageError(e.data.error, e.data.image!)
+            : new Error(e.data.error);
+
           setError(error);
+          setIsScanning(() => false);
 
           if (!errorCanvasRef.current) return;
           if (!(error instanceof ImageError)) return;
+
           const ctx = errorCanvasRef.current.getContext("2d");
           errorCanvasRef.current.width = error.image.width!;
           errorCanvasRef.current.height = error.image.height!;
           ctx?.drawImage(error.image, 0, 0);
-          setIsScanning(false);
         }
       }
     });
@@ -167,10 +171,10 @@ function Scanner({
       >
         <p>There was an error processing the image</p>
         {!isNull(error) && <p>{error.message}</p>}
-        <p>Please retry</p>
         {error instanceof ImageError && (
           <canvas ref={errorCanvasRef} className="error-image" />
         )}
+        <p>Please retry</p>
         <div className="error-modal-btn-wrapper">
           <button
             className="btn"

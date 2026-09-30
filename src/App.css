@@ -160,7 +160,6 @@ h1:has(.heading-container) {
 
     & progress {
         grid-area: btn-scan;
-        max-width: min-content;
     }
 }
 
@@ -460,8 +459,15 @@ canvas {
     max-width: min(50vw, 60vh);
 }
 
+.error-modal {
+    & h3, p {
+        margin: 0;
+    }
+}
+
 .error-modal-btn-wrapper {
     display: flex;
+    justify-content: space-between;
     gap: 16px;
 }
 

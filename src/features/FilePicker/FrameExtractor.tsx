@@ -104,7 +104,7 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
       />
       <label className="scan-progressbar">
         <canvas ref={canvasRef} />
-        Processing video <progress ref={progressRef} value="0" max="1" />
+        <progress ref={progressRef} value="0" max="1" />
       </label>
       <Modal
         className="video-result-modal"
@@ -131,7 +131,7 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
             ))}
           </div>
           <button className="btn" type="submit">
-            Upload
+            Select
           </button>
         </form>
       </Modal>

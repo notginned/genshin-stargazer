@@ -62,8 +62,17 @@ self.onmessage = async (e: MessageEvent<ServerMessage>) => {
       logError(error);
       return;
     }
+
+    // Our error has an image :D
     if (error instanceof ImageError)
-    sendMessage({ type: "error", error: error.message, image: error.image });
+      return sendMessage({
+        type: "error",
+        error: error.message,
+        image: error.image,
+      });
+
+    // no image :(
+    sendMessage({ type: "error", error: error.message });
   }
 };
 
