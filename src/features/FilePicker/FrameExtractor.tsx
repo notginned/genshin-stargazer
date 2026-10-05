@@ -50,6 +50,10 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
   };
 
   const handleEnded: ReactEventHandler<HTMLVideoElement> = (e) => {
+    // workaround for onended not triggering because
+    // Chrome does not fire ended event when manually seeking
+    if (!e.currentTarget.ended) return;
+
     const uniqueFrames = dedupFrames(frames, e.currentTarget);
     setScreens(() => uniqueFrames);
     logDebug(uniqueFrames);
@@ -97,7 +101,7 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
         src={src}
         muted
         onLoadedData={handleLoadedData}
-        onEnded={handleEnded}
+        onSeeked={handleEnded}
       />
       <label className="scan-progressbar">
         <canvas ref={canvasRef} />

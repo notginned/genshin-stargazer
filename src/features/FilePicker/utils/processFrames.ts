@@ -1,4 +1,5 @@
 import { type Frames } from "../../../types/State.type";
+import { logDebug } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
 
 const drawFrame = (
@@ -17,6 +18,7 @@ const drawFrame = (
 
   const updateCanvas: VideoFrameRequestCallback = (_now, _metadata) => {
     if (video.currentTime >= video.duration) {
+      logDebug("video ended", video.ended);
       return;
     };
 
