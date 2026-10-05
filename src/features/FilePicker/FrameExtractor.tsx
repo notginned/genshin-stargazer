@@ -38,8 +38,6 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
   const frames: HTMLCanvasElement[] = [];
 
   const handleLoadedData: ReactEventHandler<HTMLVideoElement> = (e) => {
-    e.currentTarget.defaultPlaybackRate = 4;
-    e.currentTarget.playbackRate = 4;
 
     drawFrame(
       e.currentTarget,
@@ -98,7 +96,6 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
       <video
         src={src}
         muted
-        autoPlay
         onLoadedData={handleLoadedData}
         onEnded={handleEnded}
       />
