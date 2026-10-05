@@ -40,6 +40,7 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
   const handleLoadedData: ReactEventHandler<HTMLVideoElement> = (e) => {
     e.currentTarget.defaultPlaybackRate = 4;
     e.currentTarget.playbackRate = 4;
+
     drawFrame(
       e.currentTarget,
       canvasRef.current!,
