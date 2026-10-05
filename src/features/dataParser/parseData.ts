@@ -6,9 +6,10 @@ import {
   itemNamesDict,
   wishTypesDict,
 } from "./config/dictionaries.ts";
+import { logDebug } from "../../utils/lib.ts";
 
-// all whitespace + a digit + all whitespace + dash + all whitespace + wildcard
-const rarityRegex = /\W+\d\W*-\W*.*/;
+// all whitespace + a digit + all whitespace + optional dash + all whitespace + wildcard
+const rarityRegex = /\W+\d\W*-?\W*.*/;
 
 function correctName(
   name: string,
@@ -125,6 +126,7 @@ function parseScanResults(data: ScanResult): Wish[] {
   const wishes = itemNames.map<Wish>((itemName, i) => {
     return {
       id: crypto.randomUUID(),
+      pos: i,
       itemName,
       pageNumber,
       wishType: wishTypes[i].replace("-2", ""),
@@ -133,6 +135,7 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
+  logDebug({ data, wishes });
   return wishes;
 }
 

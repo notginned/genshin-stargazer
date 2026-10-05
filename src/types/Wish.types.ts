@@ -1,5 +1,6 @@
 export interface Wish {
   id: ReturnType<typeof crypto.randomUUID>;
+  pos?: number;
   itemName: string;
   wishType: string;
   part: "" | "Wish 2";

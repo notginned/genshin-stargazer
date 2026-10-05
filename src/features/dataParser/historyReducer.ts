@@ -63,7 +63,9 @@ function sortWishHistory(history: WishHistory): WishHistory {
 
 // This is only to be used in sorted lists
 function isSameWish(w1: Wish, w2: Wish) {
-  return w1.itemName === w2.itemName && w1.timeReceived === w2.timeReceived;
+  // Also compare positions for better reliability in case of split 10 pulls
+  // pos can be undefined because it was added later in the schema
+  return w1.itemName === w2.itemName && w1.timeReceived === w2.timeReceived && (w1.pos ?? -1) === (w2.pos ?? -2);
 }
 
 // Adapted from the merge algorithm in merge sort
