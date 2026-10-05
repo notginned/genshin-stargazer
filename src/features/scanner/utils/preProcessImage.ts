@@ -7,7 +7,7 @@ import {
 } from "./config/bboxes.ts";
 import { Operation } from "gammacv";
 import * as gm from "gammacv";
-import type { SerializedImage } from "../../../types/DeserializedImage.ts";
+import type { SerializedImage } from "../../../types/SerializedImage.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 
 const gammaProcess = async (image: ImageBitmap, hash: string) => {

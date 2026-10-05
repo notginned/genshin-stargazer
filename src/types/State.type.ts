@@ -1,5 +1,5 @@
 import type { ScanRegions } from "../features/scanner/utils/scan.types.ts";
-import type { SerializedImage } from "./DeserializedImage.ts";
+import type { SerializedImage } from "./SerializedImage.ts";
 
 export type ScannedImages = { [hash: string]: boolean };
 
