@@ -30,6 +30,10 @@ interface ScannerProps {
   saveHistory: (newHistory: WishHistory) => void;
 }
 
+const worker = new Worker(new URL("../utils/scan.worker.ts", import.meta.url), {
+  type: "module",
+});
+
 function Scanner({
   images,
   setImages,
@@ -55,13 +59,7 @@ function Scanner({
     setError(() => null);
   };
 
-  const workerRef = useRef<Worker | null>(null);
-
   useEffect(() => {
-    const worker = new Worker(
-      new URL("../utils/scan.worker.ts", import.meta.url),
-      { type: "module" },
-    );
     worker.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
       switch (e.data.type) {
         case "result": {
@@ -110,7 +108,6 @@ function Scanner({
         }
       }
     });
-    workerRef.current = worker;
   }, [setIsScanning, saveHistory, setScannedImages, setImages]);
 
   // Only there for debug purposes
@@ -133,12 +130,12 @@ function Scanner({
   const handleWorkerClick = async () => {
     if (isScanning) return;
     if (isEmpty(newImages)) setImages({});
-    if (isNull(workerRef.current)) {
+    if (isNull(worker)) {
       return setError(new Error("Could not create worker"));
     }
 
     setIsScanning(true);
-    workerRef.current.postMessage({
+    worker.postMessage({
       type: "process",
       images: newImages,
       scannedImages,
