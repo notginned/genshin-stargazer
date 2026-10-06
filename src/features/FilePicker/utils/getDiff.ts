@@ -1,8 +1,8 @@
 import pixelmatch from "pixelmatch";
 
 const getDiff = (
-  img1: HTMLCanvasElement,
-  img2: HTMLCanvasElement,
+  img1: OffscreenCanvas,
+  img2: OffscreenCanvas,
   width: number,
   height: number,
 ) => {

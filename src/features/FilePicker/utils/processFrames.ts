@@ -47,16 +47,15 @@ const drawFrame = (
 };
 
 const dedupFrames = (
-  frames: HTMLCanvasElement[],
-  video: HTMLVideoElement,
+  frames: OffscreenCanvas[],
   tolerance: number = 0.2,
-): Frames => {
+): OffscreenCanvas[] => {
   const f = Object.values(frames);
   let L = 0;
   let R = L + 1;
-  const width = video.videoWidth;
-  const height = video.videoHeight;
-  const res: HTMLCanvasElement[] = [];
+  const width = frames[0].width;
+  const height = frames[0].height;
+  const res: OffscreenCanvas[] = [];
 
   // Comparing 0 - N-1 frames
   while (R < f.length) {
@@ -80,12 +79,7 @@ const dedupFrames = (
     res.push(frames[L]);
   }
 
-  return res.reduce<Frames>((acc, cur) => {
-    if (cur.dataset.hash) {
-      acc[cur.dataset.hash] = cur;
-    }
-    return acc;
-  }, {});
+  return res;
 };
 
 export { drawFrame, dedupFrames };

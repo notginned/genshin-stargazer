@@ -97,12 +97,6 @@ const FrameExtractor = ({ setImages, src, setSrc }: FrameExtractorProps) => {
 
   return (
     <div>
-      <video
-        src={src}
-        muted
-        onLoadedData={handleLoadedData}
-        onSeeked={handleEnded}
-      />
       <label className="scan-progressbar">
         <canvas ref={canvasRef} />
         <progress ref={progressRef} value="0" max="1" />
