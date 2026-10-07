@@ -16,6 +16,8 @@ function VideoPicker({ setImages }: FilePickerProps) {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const progressRef = useRef<HTMLProgressElement | null>(null);
   const modalRef = useRef<HTMLDialogElement | null>(null);
+  const errorModalRef = useRef<HTMLDialogElement | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     worker.onmessage = (e) => {
@@ -28,6 +30,10 @@ function VideoPicker({ setImages }: FilePickerProps) {
         case "frames":
           setFrames(() => e.data.frames);
           setIsProcessing(() => false);
+          break;
+        case "error":
+          const error = e.data.error;
+          setError(() => error);
       }
     };
   }, []);
@@ -57,6 +63,7 @@ function VideoPicker({ setImages }: FilePickerProps) {
             <VideoFile /> Add video
           </button>
         </label>
+
         <Modal title="Unsupported browser" ref={modalRef}>
           <div>
             <span>
@@ -90,6 +97,34 @@ function VideoPicker({ setImages }: FilePickerProps) {
       {frames.length !== 0 && (
         <FramePicker frames={frames} setImages={setImages} />
       )}
+
+      <Modal title="Error" ref={errorModalRef} open={error ? true : false}>
+        <div>
+          <span>Encountered an error: {error?.message}</span>
+          <br />
+          <span>Please report the issue on github</span>
+        </div>
+        <div className="error-modal-btn-wrapper">
+          <button
+            className="btn"
+            onClick={async () =>
+              error &&
+              navigator.clipboard.writeText(
+                error.message + "\n\n" + error?.stack,
+              )
+            }
+          >
+            Copy error
+          </button>
+
+          <button
+            className="btn"
+            onClick={() => errorModalRef.current?.close()}
+          >
+            Okay
+          </button>
+        </div>
+      </Modal>
     </>
   );
 }

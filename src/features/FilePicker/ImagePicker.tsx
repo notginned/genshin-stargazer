@@ -12,7 +12,7 @@ function ImagePicker({ images, setImages }: FilePickerProps) {
 
     await Promise.all(
       Array.from(e.target.files, async (file) => {
-        console.log("data", file)
+        // console.log("data", file)
         const hash = "h" + hashCode(file.name + file.size + file.lastModified);
         res[hash] = { file , hash };
       }),

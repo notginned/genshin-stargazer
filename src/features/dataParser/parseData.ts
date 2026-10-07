@@ -6,11 +6,12 @@ import {
   itemNamesDict,
   wishTypesDict,
 } from "./config/dictionaries.ts";
+import { logDebug } from "../../utils/lib.ts";
 
 // for removing rarities from item names
 // just understand it at regex101.com atp
 // i do not like this regex :(
-const rarityRegex = /(\W[45][^\w^\n^\r][A-zA-Z].+\))|([ ].+\))|^([^\s]\w+\))|([ ]\(.+)/;
+const rarityRegex = /\(.+\)|(\s+\))|\W+[45].*|\w*\)/;
 
 function correctName(
   name: string,
@@ -78,7 +79,6 @@ function sanitizeItems(items: string[], dict: BKTree, tolerance = 5) {
       res.push(joined);
       i += 1;
     }
-
   }
   return res;
 }
@@ -138,6 +138,7 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
+  logDebug({ data, wishes });
   return wishes;
 }
 
