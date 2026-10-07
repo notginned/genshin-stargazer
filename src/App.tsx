@@ -1,7 +1,6 @@
 import { Suspense, useRef, useState } from "react";
 import "./App.css";
 import { useLocalStorage } from "./hooks/useLocalStorage.tsx";
-import { mergeHistories } from "./features/dataParser/historyReducer.ts";
 import type { WishHistory } from "./types/Wish.types.ts";
 import { createEmptyWishHistory } from "./utils/createEmptyWishHistory.ts";
 import { generateSheet } from "./features/wishTable/utils/generateSheet.ts";
@@ -29,10 +28,6 @@ function App() {
   const [activeTab, setActiveTab] = useState("character_event_wish");
   const tablesRef = useRef<EventToTable>(null);
   const clearHistoryDialogRef = useRef<HTMLDialogElement>(null);
-
-  const saveHistory = (newHistory: WishHistory) => {
-    setHistory((prevHistory) => mergeHistories(prevHistory, newHistory));
-  };
 
   const handleClearHistory = () => {
     if (isNull(clearHistoryDialogRef.current)) return;
@@ -87,7 +82,7 @@ function App() {
                 isScanning={isScanning}
                 setIsScanning={setIsScanning}
                 setImages={setImages}
-                saveHistory={saveHistory}
+                setHistory={setHistory}
               />
             </Suspense>
 
