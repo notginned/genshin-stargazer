@@ -1,5 +1,5 @@
-import type { Images, ScannedImages } from "./State.type";
-import type { WishHistory } from "./Wish.types";
+import type { Images, ScannedImages } from "../../types/State.type";
+import type { WishHistory } from "../../types/Wish.types";
 
 type WorkerMessage =
   | { type: "result"; newHistory: WishHistory; scannedHashes: ScannedImages }

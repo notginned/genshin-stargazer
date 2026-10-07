@@ -12,10 +12,10 @@ import type { Images, ScannedImages } from "../../../types/State.type.ts";
 import { ImageError } from "../../../utils/ImageError.ts";
 import { ScanResultsModal } from "./ScanResultsModal.tsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
-import { isNull, logDebug } from "../../../utils/lib.ts";
+import { isNull } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
-import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
+import type { WorkerMessage } from "../ScanWorker.types.ts";
 // import { scanImages } from "../utils/scanImages.ts";
 // import { preprocessImages } from "../utils/preProcessImage.ts";
 // import { getDebugImages } from "../utils/getDebugImages.ts";
@@ -63,7 +63,6 @@ function Scanner({
     worker.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
       switch (e.data.type) {
         case "result": {
-          logDebug("reply from worker", e.data);
           const newHistory = e.data.newHistory;
           const scannedHashes = e.data.scannedHashes;
 

@@ -1,4 +1,3 @@
-import { type Frames } from "../../../types/State.type";
 import { logDebug } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
 
@@ -20,7 +19,7 @@ const drawFrame = (
     if (video.currentTime >= video.duration) {
       logDebug("video ended", video.ended);
       return;
-    };
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -47,20 +46,19 @@ const drawFrame = (
 };
 
 const dedupFrames = (
-  frames: HTMLCanvasElement[],
-  video: HTMLVideoElement,
+  frames: OffscreenCanvas[],
   tolerance: number = 0.2,
-): Frames => {
+): OffscreenCanvas[] => {
   const f = Object.values(frames);
   let L = 0;
   let R = L + 1;
-  const width = video.videoWidth;
-  const height = video.videoHeight;
-  const res: HTMLCanvasElement[] = [];
+  const width = frames[0].width;
+  const height = frames[0].height;
+  const res: OffscreenCanvas[] = [];
 
   // Comparing 0 - N-1 frames
   while (R < f.length) {
-    const diff = getDiff(frames[L], frames[R], width, height);
+    const diff = getDiff(frames[L], frames[R]);
     const diffP = (diff / (width * height)) * 100;
 
     if (diffP > tolerance) {
@@ -73,19 +71,14 @@ const dedupFrames = (
   }
 
   // Adding the last frame if its different;
-  const diff = getDiff(frames[L], res[res.length - 1], width, height);
+  const diff = getDiff(frames[L], res[res.length - 1]);
   const diffP = (diff / (width * height)) * 100;
 
   if (diffP > tolerance) {
     res.push(frames[L]);
   }
 
-  return res.reduce<Frames>((acc, cur) => {
-    if (cur.dataset.hash) {
-      acc[cur.dataset.hash] = cur;
-    }
-    return acc;
-  }, {});
+  return res;
 };
 
 export { drawFrame, dedupFrames };

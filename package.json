@@ -12,8 +12,12 @@
   },
   "dependencies": {
     "@emotion/styled": "^11.14.1",
+    "@mediabunny/ac3": "^1.61.3",
+    "@mediabunny/dts": "^1.61.3",
+    "@mediabunny/prores": "^1.61.3",
     "@mui/icons-material": "^7.3.2",
     "gammacv": "^0.5.3",
+    "mediabunny": "^1.61.3",
     "onnxruntime-web": "^1.30.0",
     "pixelmatch": "^7.2.0",
     "ppu-paddle-ocr": "^6.6.0",
