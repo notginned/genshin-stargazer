@@ -20,7 +20,6 @@ function VideoPicker({ setImages }: FilePickerProps) {
   useEffect(() => {
     worker.onmessage = (e) => {
       const type = e.data.type;
-      console.log(e.data);
 
       switch (type) {
         case "progress":

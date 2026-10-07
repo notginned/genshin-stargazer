@@ -1,5 +1,5 @@
 import { ImageError } from "../../../utils/ImageError";
-import { isNull, log } from "../../../utils/lib";
+import { isNull } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
 import { PaddleOcrService } from "ppu-paddle-ocr/web";
@@ -69,7 +69,6 @@ export const scanSingleImage = async (region: ScanRegions) => {
       pageNumber: ocrResult[3].text,
     } satisfies ScanResult;
 
-    log(res);
     return res;
   } catch (e) {
     if (!(e instanceof Error)) throw new Error("Unable to scan an image");
