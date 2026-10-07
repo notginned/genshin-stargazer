@@ -2,8 +2,7 @@ import { Input, ALL_FORMATS, BlobSource, CanvasSink } from "mediabunny";
 import { registerAc3Decoder } from "@mediabunny/ac3";
 import { registerDtsDecoder } from "@mediabunny/dts";
 import { registerProresDecoder } from "@mediabunny/prores";
-import { dedupFrames } from "./processFrames";
-import { hashCode } from "../../../utils/hash";
+import { getDiff } from "./getDiff";
 
 // enabling non WebCodec decoders
 registerAc3Decoder();
@@ -19,8 +18,6 @@ self.onmessage = async (e) => {
       case "file":
         {
           const source = new BlobSource(file);
-          const title = file.name;
-
           const input = new Input({
             source,
             formats: ALL_FORMATS,
@@ -64,34 +61,45 @@ self.onmessage = async (e) => {
 
           // Iterate over all thumbnail canvases
           let i = 0;
-          const frames: OffscreenCanvas[] = [];
+          const raws: OffscreenCanvas[] = [];
+          const canvases = sink.canvasesAtTimestamps(timestamps);
+          let buff = (await canvases.next()).value;
 
-          for await (const wrappedCanvas of sink.canvasesAtTimestamps(
-            timestamps,
-          )) {
+          if (!buff) {
+            throw new Error("Thumbnail missing");
+          }
+
+          for await (const wrappedCanvas of canvases) {
             if (!wrappedCanvas) {
               throw new Error("Thumbnail missing");
             }
+
             const canvas = wrappedCanvas.canvas as OffscreenCanvas;
 
-            frames.push(canvas);
+            const diffP = getDiff(canvas, buff.canvas as OffscreenCanvas) * 100;
+            if (diffP >= 0.2) {
+              raws.push(buff.canvas as OffscreenCanvas);
+            }
+
+            buff = wrappedCanvas;
             i++;
-            self.postMessage({ type: "progress", value: (i / THUMBNAIL_COUNT) });
+            self.postMessage({ type: "progress", value: i / THUMBNAIL_COUNT });
           }
 
-          // Don't care about reproducibility for hashes
-          // just want to avoid collisions at all costs
-          const unique = await Promise.all(
-            dedupFrames(frames).map(
-              async (frame) =>
-                new File(
-                  [await frame.convertToBlob()],
-                  "v" + crypto.randomUUID(),
-                ),
+          // Handling the last image
+          const diffP =
+            getDiff(buff.canvas as OffscreenCanvas, raws[raws.length - 1]) *
+            100;
+          if (diffP >= 0.2) raws.push(buff.canvas as OffscreenCanvas);
+
+          const frames = await Promise.all(
+            raws.map(
+              async (raws) =>
+                new File([await raws.convertToBlob()], crypto.randomUUID()),
             ),
           );
 
-          self.postMessage({ type: "frames", frames: unique });
+          self.postMessage({ type: "frames", frames });
         }
 
         break;

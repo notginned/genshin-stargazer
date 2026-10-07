@@ -1,9 +1,8 @@
-// import { PaddleOCR } from "@paddleocr/paddleocr-js";
 import { ImageError } from "../../../utils/ImageError";
 import { isNull, log } from "../../../utils/lib";
 import type { Rectangle, ScanRegions, ScanResult } from "./scan.types";
 
-import {  PaddleOcrService } from "ppu-paddle-ocr/web";
+import { PaddleOcrService } from "ppu-paddle-ocr/web";
 
 export const service = new PaddleOcrService({
   debugging: {
@@ -59,16 +58,15 @@ export const scanSingleImage = async (region: ScanRegions) => {
     );
 
     // Concurrency is a lie
-    const rps = await service.batchRecognize(rects, {
+    const ocrResult = await service.batchRecognize(rects, {
       concurrency: 1,
     });
-    // const rps = await Promise.all(rects.map((r) => ocr(r)));
 
     const res = {
-      itemName: rps[0].text,
-      wishType: rps[1].text,
-      timeReceived: rps[2].text,
-      pageNumber: rps[3].text,
+      itemName: ocrResult[0].text,
+      wishType: ocrResult[1].text,
+      timeReceived: ocrResult[2].text,
+      pageNumber: ocrResult[3].text,
     } satisfies ScanResult;
 
     log(res);

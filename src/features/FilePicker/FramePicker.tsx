@@ -1,32 +1,16 @@
 import {
   useRef,
-  useState,
   type Dispatch,
-  type ReactEventHandler,
-  type RefObject,
   type SetStateAction,
   type SubmitEventHandler,
 } from "react";
-import { dedupFrames, drawFrame } from "./utils/processFrames";
 import { Modal } from "../../components/Modal";
-import type { Frames, Images } from "../../types/State.type";
-import { fileFromCanvas } from "./utils/fileFromCanvas";
-import { isNull, logDebug } from "../../utils/lib";
+import type { Images } from "../../types/State.type";
 
 interface FramePickerProps {
   setImages: Dispatch<SetStateAction<Images>>;
   frames: File[];
 }
-
-const showElement = <T extends HTMLElement>(ref: RefObject<T | null>) => {
-  if (!ref.current) return;
-  ref.current.style.display = "initial";
-};
-
-const hideElement = <T extends HTMLElement>(ref: RefObject<T | null>) => {
-  if (!ref.current) return;
-  ref.current.style.display = "none";
-};
 
 const FramePicker = ({ setImages, frames }: FramePickerProps) => {
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -47,8 +31,6 @@ const FramePicker = ({ setImages, frames }: FramePickerProps) => {
       acc[cur] = framesObj[cur];
       return acc;
     }, {});
-
-    console.log({ framesObj, images, frames, results });
 
     modalRef.current?.close();
     setImages((previousImages) => ({ ...previousImages, ...images }));

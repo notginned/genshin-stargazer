@@ -1,4 +1,3 @@
-import { type Frames } from "../../../types/State.type";
 import { logDebug } from "../../../utils/lib";
 import { getDiff } from "./getDiff";
 
@@ -20,7 +19,7 @@ const drawFrame = (
     if (video.currentTime >= video.duration) {
       logDebug("video ended", video.ended);
       return;
-    };
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -59,7 +58,7 @@ const dedupFrames = (
 
   // Comparing 0 - N-1 frames
   while (R < f.length) {
-    const diff = getDiff(frames[L], frames[R], width, height);
+    const diff = getDiff(frames[L], frames[R]);
     const diffP = (diff / (width * height)) * 100;
 
     if (diffP > tolerance) {
@@ -72,7 +71,7 @@ const dedupFrames = (
   }
 
   // Adding the last frame if its different;
-  const diff = getDiff(frames[L], res[res.length - 1], width, height);
+  const diff = getDiff(frames[L], res[res.length - 1]);
   const diffP = (diff / (width * height)) * 100;
 
   if (diffP > tolerance) {
