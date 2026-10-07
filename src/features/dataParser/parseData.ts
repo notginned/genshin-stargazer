@@ -6,18 +6,19 @@ import {
   itemNamesDict,
   wishTypesDict,
 } from "./config/dictionaries.ts";
-import { logDebug } from "../../utils/lib.ts";
 
-// all whitespace + a digit + all whitespace + optional dash + all whitespace + wildcard
-const rarityRegex = /\W+\d\W*-?\W*.*/;
+// for removing rarities from item names
+// just understand it at regex101.com atp
+// i do not like this regex :(
+const rarityRegex = /(\W[45][^\w^\n^\r][A-zA-Z].+\))|([ ].+\))|^([^\s]\w+\))|([ ]\(.+)/;
 
 function correctName(
   name: string,
   tree: BKTree,
   tolerance: number,
 ): [string, number] {
+  // More tolerant towards longer strings
   const [result, distance] = tree
-    // More tolerant towards longer strings
     .search(name, Math.ceil(name.length / tolerance))
     .sort(([, d1], [, d2]) => d1 - d2)[0] || [name, Infinity];
 
@@ -68,7 +69,7 @@ function sanitizeItems(items: string[], dict: BKTree, tolerance = 5) {
     // so we try joining it with the next item
     // Genshin only has item names upto 2 rows AFAIK
     const [joined, joinedDistance] = sanitizeSingleItem(
-      cleaned + " " + items[i + 1]?.trim(),
+      cleaned + " " + (items[i + 1] ?? "")?.trim(),
       dict,
       tolerance,
     );
@@ -77,6 +78,7 @@ function sanitizeItems(items: string[], dict: BKTree, tolerance = 5) {
       res.push(joined);
       i += 1;
     }
+
   }
   return res;
 }
@@ -109,11 +111,12 @@ function dateFromTimeString(time: string) {
 function parseScanResults(data: ScanResult): Wish[] {
   const pageNumber = Number(data.pageNumber?.replaceAll(/[^0-9]/g, ""));
 
+  // Tolerance (Higher tolerates less)
   const itemNamesCol = prepareColumn(data.itemName, "Item Name", 5);
   const itemNames = sanitizeItems(itemNamesCol, itemNamesDict);
 
   const wishTypesCol = prepareColumn(data.wishType, "Wish Type", 5);
-  const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict, 3);
+  const wishTypes = sanitizeItems(wishTypesCol, wishTypesDict, 6);
 
   // First 10 characters are YY-MM-DD
   // Rest are hh:mm:ss
@@ -135,7 +138,6 @@ function parseScanResults(data: ScanResult): Wish[] {
     };
   });
 
-  logDebug({ data, wishes });
   return wishes;
 }
 
