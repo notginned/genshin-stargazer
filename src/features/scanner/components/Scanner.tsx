@@ -21,13 +21,14 @@ import type { WorkerMessage } from "../ScanWorker.types.ts";
 // import { getDebugImages } from "../utils/getDebugImages.ts";
 import { objectDifference } from "../../../utils/objectDifference.ts";
 import CropFreeIcon from "@mui/icons-material/CropFree";
+import { mergeHistories } from "../../dataParser/historyReducer.ts";
 
 interface ScannerProps {
   images: Images;
   isScanning: Boolean;
   setIsScanning: Dispatch<SetStateAction<boolean>>;
   setImages: Dispatch<SetStateAction<Images>>;
-  saveHistory: (newHistory: WishHistory) => void;
+  setHistory: Dispatch<SetStateAction<WishHistory>>;
 }
 
 const worker = new Worker(new URL("../utils/scan.worker.ts", import.meta.url), {
@@ -39,7 +40,7 @@ function Scanner({
   setImages,
   isScanning,
   setIsScanning,
-  saveHistory,
+  setHistory,
 }: ScannerProps) {
   const [error, setError] = useState<Nullable<ImageError | Error>>(null);
   const errorModalRef = useRef<Nullable<HTMLDialogElement>>(null);
@@ -60,17 +61,17 @@ function Scanner({
   };
 
   useEffect(() => {
-    worker.addEventListener("message", (e: MessageEvent<WorkerMessage>) => {
+    const handler = (e: MessageEvent<WorkerMessage>) => {
       switch (e.data.type) {
         case "result": {
           const newHistory = e.data.newHistory;
           const scannedHashes = e.data.scannedHashes;
 
           // Saving history to browser storage
-          saveHistory(newHistory);
+          setHistory((prevHistory) => mergeHistories(prevHistory, newHistory));
 
           // Showing the modal with scan results
-          setScanResultTable(newHistory);
+          setScanResultTable(() => newHistory);
 
           // Set scanned images only after data state is set
           // to avoid inconsistent cache
@@ -106,8 +107,13 @@ function Scanner({
           ctx?.drawImage(error.image, 0, 0);
         }
       }
-    });
-  }, [setIsScanning, saveHistory, setScannedImages, setImages]);
+    };
+    worker.addEventListener("message", handler);
+
+    return () => {
+      worker.removeEventListener("message", handler);
+    };
+  }, [setScannedImages, setIsScanning, setImages, setHistory]);
 
   // Only there for debug purposes
   //     const handleClick = async () => {

@@ -20,7 +20,7 @@ function VideoPicker({ setImages }: FilePickerProps) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    worker.onmessage = (e) => {
+    const messageHandler = (e: MessageEvent) => {
       const type = e.data.type;
 
       switch (type) {
@@ -36,6 +36,9 @@ function VideoPicker({ setImages }: FilePickerProps) {
           setError(() => error);
       }
     };
+    worker.addEventListener("message", messageHandler);
+
+    return () => worker.removeEventListener("message", messageHandler);
   }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
