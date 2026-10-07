@@ -3,6 +3,7 @@ import { registerAc3Decoder } from "@mediabunny/ac3";
 import { registerDtsDecoder } from "@mediabunny/dts";
 import { registerProresDecoder } from "@mediabunny/prores";
 import { dedupFrames } from "./processFrames";
+import { hashCode } from "../../../utils/hash";
 
 // enabling non WebCodec decoders
 registerAc3Decoder();
@@ -42,7 +43,7 @@ self.onmessage = async (e) => {
           const height = await videoTrack.getDisplayHeight();
 
           // Prepare the timestamps for the thumbnails, equally spaced between the first and last timestamp of the video
-          const FPS = 1;
+          const FPS = 2;
           const firstTimestamp = await videoTrack.getFirstTimestamp();
           const lastTimestamp = await videoTrack.computeDuration();
           const THUMBNAIL_COUNT = lastTimestamp * FPS;
@@ -75,13 +76,18 @@ self.onmessage = async (e) => {
 
             frames.push(canvas);
             i++;
-            self.postMessage({ type: "progress", value: i });
+            self.postMessage({ type: "progress", value: (i / THUMBNAIL_COUNT) });
           }
 
+          // Don't care about reproducibility for hashes
+          // just want to avoid collisions at all costs
           const unique = await Promise.all(
             dedupFrames(frames).map(
-              async (frame, i) =>
-                new File([await frame.convertToBlob()], `${title}_${i}`),
+              async (frame) =>
+                new File(
+                  [await frame.convertToBlob()],
+                  "v" + crypto.randomUUID(),
+                ),
             ),
           );
 

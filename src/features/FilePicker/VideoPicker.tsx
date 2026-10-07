@@ -1,8 +1,9 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 // import { hashCode } from "../../utils/hash.ts";
 import type { FilePickerProps } from "../../types/FilePickerProps.tsx";
 // import { FrameExtractor } from "./FrameExtractor.tsx";
 import VideoFile from "@mui/icons-material/VideoFile";
+import { FramePicker } from "./FramePicker.tsx";
 
 const worker = new Worker(
   new URL("./utils/thumbnail.worker.ts", import.meta.url),
@@ -13,7 +14,9 @@ const worker = new Worker(
 
 function VideoPicker({ setImages }: FilePickerProps) {
   // const [src, setSrc] = useState<string | null>(null);
-  const [blobs, setBlobs] = useState<Blob[]>([]);
+  const [frames, setFrames] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const progressRef = useRef<HTMLProgressElement | null>(null);
 
   useEffect(() => {
     worker.onmessage = (e) => {
@@ -22,9 +25,11 @@ function VideoPicker({ setImages }: FilePickerProps) {
 
       switch (type) {
         case "progress":
+          if (progressRef.current) progressRef.current.value = e.data.value;
           break;
         case "frames":
-          setBlobs(() => e.data.frames);
+          setFrames(() => e.data.frames);
+          setIsProcessing(() => false);
       }
     };
   }, []);
@@ -35,6 +40,7 @@ function VideoPicker({ setImages }: FilePickerProps) {
       // const newSrc = URL.createObjectURL(file);
       // const hash = "h" + hashCode(file.name + file.size + file.lastModified);
       worker.postMessage({ type: "file", file });
+      setIsProcessing(() => true);
 
       // setSrc(newSrc);
     });
@@ -49,9 +55,16 @@ function VideoPicker({ setImages }: FilePickerProps) {
         <VideoFile /> Add video
         <input type="file" accept="video/*" onChange={handleChange} />
       </label>
-      {blobs.map((blob, i) => (
-        <img key={i} src={URL.createObjectURL(blob)} />
-      ))}
+      {/*{frames.map((frame, i) => (
+        <img key={i} src={URL.createObjectURL(frame)} />
+      ))}*/}
+      {isProcessing && <label className="scan-progressbar">
+        <progress ref={progressRef} value="0" max="1" />
+      </label>}
+      {frames.length !== 0 && (
+        <FramePicker frames={frames} setImages={setImages} />
+      )}
+      {}
       {/*{src && <FrameExtractor src={src} setImages={setImages} setSrc={setSrc} />}*/}
     </>
   );
