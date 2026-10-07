@@ -30,7 +30,6 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react-swc": "^4.0.0",
     "eslint-plugin-n": "^18.4.0",
     "eslint-plugin-promise": "^7.3.0",
