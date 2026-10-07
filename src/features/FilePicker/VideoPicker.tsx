@@ -17,8 +17,15 @@ function VideoPicker({ setImages }: FilePickerProps) {
 
   useEffect(() => {
     worker.onmessage = (e) => {
+      const type = e.data.type;
       console.log(e.data);
-      setBlobs((blobs) => [...blobs, ...e.data.frames]);
+
+      switch (type) {
+        case "progress":
+          break;
+        case "frames":
+          setBlobs(() => e.data.frames);
+      }
     };
   }, []);
   function handleChange(e: ChangeEvent<HTMLInputElement>) {

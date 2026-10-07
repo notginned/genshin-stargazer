@@ -15,7 +15,7 @@ import { useLocalStorage } from "../../../hooks/useLocalStorage.tsx";
 import { isNull, logDebug } from "../../../utils/lib.ts";
 import { type Nullable } from "../../../types/lib.types.ts";
 import { isEmpty } from "../../../utils/isEmpty.ts";
-import type { WorkerMessage } from "../../../types/WorkerMessage.ts";
+import type { WorkerMessage } from "../ScanWorker.types.ts";
 // import { scanImages } from "../utils/scanImages.ts";
 // import { preprocessImages } from "../utils/preProcessImage.ts";
 // import { getDebugImages } from "../utils/getDebugImages.ts";

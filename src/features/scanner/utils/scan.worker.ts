@@ -2,7 +2,7 @@ import { type ScannedImages } from "../../../types/State.type";
 import type {
   ServerMessage,
   WorkerMessage,
-} from "../../../types/WorkerMessage";
+} from "../ScanWorker.types";
 import { ImageError } from "../../../utils/ImageError";
 import { logError } from "../../../utils/lib";
 import { processHistory } from "../../dataParser/processHistory";

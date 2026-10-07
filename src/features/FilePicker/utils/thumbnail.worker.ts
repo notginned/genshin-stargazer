@@ -11,13 +11,14 @@ registerProresDecoder();
 
 self.onmessage = async (e) => {
   try {
-    const type = e.data.type;
-    const file = e.data.file;
+    const type: string = e.data.type;
+    const file: File = e.data.file;
 
     switch (type) {
       case "file":
         {
           const source = new BlobSource(file);
+          const title = file.name;
 
           const input = new Input({
             source,
@@ -37,16 +38,15 @@ self.onmessage = async (e) => {
             throw new Error("Unable to decode the video track.");
           }
 
-          // Compute width and height of the thumbnails such that the larger dimension is equal to THUMBNAIL_SIZE
           const width = await videoTrack.getDisplayWidth();
           const height = await videoTrack.getDisplayHeight();
 
-          const FPS = 1;
-          const THUMBNAIL_COUNT = await videoTrack.computeDuration() * FPS;
-
           // Prepare the timestamps for the thumbnails, equally spaced between the first and last timestamp of the video
+          const FPS = 1;
           const firstTimestamp = await videoTrack.getFirstTimestamp();
           const lastTimestamp = await videoTrack.computeDuration();
+          const THUMBNAIL_COUNT = lastTimestamp * FPS;
+
           const timestamps = Array.from(
             { length: THUMBNAIL_COUNT },
             (_, i) =>
@@ -74,13 +74,18 @@ self.onmessage = async (e) => {
             const canvas = wrappedCanvas.canvas as OffscreenCanvas;
 
             frames.push(canvas);
-            // self.postMessage({ type: "frame", i, blob });
             i++;
+            self.postMessage({ type: "progress", value: i });
           }
 
-          const unique = await Promise.all(dedupFrames(frames).map(frame => frame.convertToBlob()));
+          const unique = await Promise.all(
+            dedupFrames(frames).map(
+              async (frame, i) =>
+                new File([await frame.convertToBlob()], `${title}_${i}`),
+            ),
+          );
 
-          self.postMessage({ type: 'frames', frames: unique });
+          self.postMessage({ type: "frames", frames: unique });
         }
 
         break;
